@@ -17,8 +17,6 @@ var ymlRegexp = regexp.MustCompile(`.*\.yml$`)
 var defaultIsoSegNamePrefix = "p-isolation-segment"
 var defaultIsoSegCellNamePrefix = ".isolated_diego_cell"
 
-// var defaultIsoSegRouterNamePrefix = ".isolated_router"
-
 type TileReplicator struct{}
 
 func NewTileReplicator() TileReplicator {
