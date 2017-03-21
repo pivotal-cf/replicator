@@ -2,9 +2,9 @@ package replicator
 
 import (
 	"archive/zip"
-	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"regexp"
 
@@ -68,14 +68,10 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 		}
 
 		if metadataRegexp.MatchString(srcFile.Name) {
-			buf := new(bytes.Buffer)
-
-			_, err = buf.ReadFrom(srcFileReader)
+			contents, err := ioutil.ReadAll(srcFileReader)
 			if err != nil {
 				panic(err)
 			}
-
-			contents := buf.Bytes()
 
 			var metadata Metadata
 			yaml.Unmarshal(contents, &metadata)
