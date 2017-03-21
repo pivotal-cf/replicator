@@ -33,7 +33,7 @@ var _ = Describe("arg parser", func() {
 					"--output", "/path/to/output.pivotal",
 				})
 
-				Expect(err).To(MatchError("name is a required flag"))
+				Expect(err).To(MatchError("--name is a required argument"))
 			})
 		})
 
@@ -44,7 +44,7 @@ var _ = Describe("arg parser", func() {
 					"--output", "/path/to/output.pivotal",
 				})
 
-				Expect(err).To(MatchError("path is a required flag"))
+				Expect(err).To(MatchError("--path is a required argument"))
 			})
 		})
 
@@ -55,7 +55,7 @@ var _ = Describe("arg parser", func() {
 					"--path", "/path/to/a/tile.pivotal",
 				})
 
-				Expect(err).To(MatchError("output is a required flag"))
+				Expect(err).To(MatchError("--output is a required argument"))
 			})
 		})
 	})

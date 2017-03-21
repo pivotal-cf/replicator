@@ -24,15 +24,15 @@ func (ArgParser) Parse(args []string) (ApplicationConfig, error) {
 	var errMsgs []string
 
 	if cfg.Name == "" {
-		errMsgs = append(errMsgs, "name is a required flag")
+		errMsgs = append(errMsgs, "--name is a required argument")
 	}
 
 	if cfg.Path == "" {
-		errMsgs = append(errMsgs, "path is a required flag")
+		errMsgs = append(errMsgs, "--path is a required argument")
 	}
 
 	if cfg.Output == "" {
-		errMsgs = append(errMsgs, "output is a required flag")
+		errMsgs = append(errMsgs, "--output is a required argument")
 	}
 
 	if len(errMsgs) != 0 {
