@@ -3,6 +3,8 @@ package replicator
 import (
 	"errors"
 	"flag"
+	"fmt"
+	"os"
 	"strings"
 )
 
@@ -29,6 +31,15 @@ func (ArgParser) Parse(args []string) (ApplicationConfig, error) {
 
 	if cfg.Path == "" {
 		errMsgs = append(errMsgs, "--path is a required argument")
+	} else {
+		fi, err := os.Stat(cfg.Path)
+		if err != nil {
+			return cfg, err
+		}
+
+		if !fi.Mode().IsRegular() {
+			return cfg, fmt.Errorf("%s is not a regular file", cfg.Path)
+		}
 	}
 
 	if cfg.Output == "" {
