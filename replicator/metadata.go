@@ -52,3 +52,43 @@ type JobType struct {
 	SingleAzOnly        bool          `yaml:"single_az_only"`
 	Templates           []interface{}
 }
+
+func (m *Metadata) RenameJob(name, replacementName string) bool {
+	jobTypeIndex := -1
+
+	for i, jobType := range m.JobTypes {
+		if jobType.Name == name {
+			jobTypeIndex = i
+			break
+		}
+	}
+
+	if jobTypeIndex == -1 {
+		return false
+	}
+
+	m.JobTypes[jobTypeIndex].Name = replacementName
+	return true
+}
+
+func (m *Metadata) RenameFormTypeRef(ref, replacementRef string) bool {
+	formIndex := -1
+	inputIndex := -1
+
+	for i, formType := range m.FormTypes {
+		for j, input := range formType.PropertyInputs {
+			if input.Reference == ref {
+				formIndex = i
+				inputIndex = j
+				break
+			}
+		}
+	}
+
+	if formIndex == -1 || inputIndex == -1 {
+		return false
+	}
+
+	m.FormTypes[formIndex].PropertyInputs[inputIndex].Reference = replacementRef
+	return true
+}
