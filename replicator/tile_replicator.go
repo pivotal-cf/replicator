@@ -74,7 +74,9 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 			}
 
 			var metadata Metadata
-			yaml.Unmarshal(contents, &metadata)
+			if err := yaml.Unmarshal(contents, &metadata); err != nil {
+				panic(err)
+			}
 
 			metadata.Name = defaultIsoSegName + "-" + config.Name
 
