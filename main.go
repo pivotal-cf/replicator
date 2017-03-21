@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"github.com/pivotal-cf/replicator/replicator"
@@ -11,9 +12,8 @@ func main() {
 	tileReplicator := replicator.NewTileReplicator()
 
 	app := replicator.NewApplication(argParser, tileReplicator)
-	err := app.Run(os.Args)
+	err := app.Run(os.Args[1:])
 	if err != nil {
-		// TODO print error
-		os.Exit(1)
+		log.Fatalf("error: %s", err)
 	}
 }

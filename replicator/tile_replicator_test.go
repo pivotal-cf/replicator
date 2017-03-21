@@ -53,6 +53,7 @@ var _ = Describe("tile replicator", func() {
 		for _, file := range zr.File {
 			if file.Name == "metadata/some-product.yml" {
 				metadata = file
+				break
 			}
 		}
 		Expect(metadata).NotTo(BeNil())

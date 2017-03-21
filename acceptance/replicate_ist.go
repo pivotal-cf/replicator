@@ -10,10 +10,10 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
-var _ = Describe("replicate ist", func() {
-	It("duplicates the tile and gives it the provided name", func() {
-		pathToTile := filepath.Join("tiles", "ist.pivotal")
-		pathToOutputTile := filepath.Join(os.TempDir(), "tile-output.pivotal")
+var _ = Describe("replicator", func() {
+	It("duplicates the isolation segment tile", func() {
+		pathToTile := filepath.Join("fixtures", "ist.pivotal")
+		pathToOutputTile := filepath.Join(os.TempDir(), "ist-duplicated.pivotal")
 
 		command := exec.Command(pathToMain,
 			"--path", pathToTile,
@@ -25,7 +25,5 @@ var _ = Describe("replicate ist", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(pathToOutputTile).To(BeAnExistingFile())
-
 	})
-
 })
