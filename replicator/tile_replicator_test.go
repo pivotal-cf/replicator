@@ -20,50 +20,52 @@ var _ = Describe("tile replicator", func() {
 		expectedMetadata string
 	)
 
-	BeforeEach(func() {
-		pathToTile = filepath.Join("fixtures", "some-tile.pivotal")
+	Describe("Replicate", func() {
+		BeforeEach(func() {
+			pathToTile = filepath.Join("fixtures", "some-tile.pivotal")
 
-		tempDir, err := ioutil.TempDir("", "")
-		Expect(err).NotTo(HaveOccurred())
-		pathToOutputTile = filepath.Join(tempDir, "some-other-tile.pivotal")
+			tempDir, err := ioutil.TempDir("", "")
+			Expect(err).NotTo(HaveOccurred())
+			pathToOutputTile = filepath.Join(tempDir, "some-other-tile.pivotal")
 
-		expectedMetadataFile := filepath.Join("fixtures", "expected-metadata.yml")
+			expectedMetadataFile := filepath.Join("fixtures", "expected-metadata.yml")
 
-		contents, err := ioutil.ReadFile(expectedMetadataFile)
-		Expect(err).NotTo(HaveOccurred())
-		expectedMetadata = string(contents)
+			contents, err := ioutil.ReadFile(expectedMetadataFile)
+			Expect(err).NotTo(HaveOccurred())
+			expectedMetadata = string(contents)
 
-		tileReplicator = replicator.NewTileReplicator()
-	})
-
-	It("creates a duplicate tile with modified metadata", func() {
-		err := tileReplicator.Replicate(replicator.ApplicationConfig{
-			Path:   pathToTile,
-			Output: pathToOutputTile,
-			Name:   "magenta",
+			tileReplicator = replicator.NewTileReplicator()
 		})
-		Expect(err).NotTo(HaveOccurred())
 
-		zr, err := zip.OpenReader(pathToOutputTile)
-		Expect(err).NotTo(HaveOccurred())
+		It("creates a duplicate tile with modified metadata", func() {
+			err := tileReplicator.Replicate(replicator.ApplicationConfig{
+				Path:   pathToTile,
+				Output: pathToOutputTile,
+				Name:   "magenta",
+			})
+			Expect(err).NotTo(HaveOccurred())
 
-		defer zr.Close()
+			zr, err := zip.OpenReader(pathToOutputTile)
+			Expect(err).NotTo(HaveOccurred())
 
-		var metadata *zip.File
-		for _, file := range zr.File {
-			if file.Name == "metadata/some-product.yml" {
-				metadata = file
-				break
+			defer zr.Close()
+
+			var metadata *zip.File
+			for _, file := range zr.File {
+				if file.Name == "metadata/some-product.yml" {
+					metadata = file
+					break
+				}
 			}
-		}
-		Expect(metadata).NotTo(BeNil())
+			Expect(metadata).NotTo(BeNil())
 
-		f, err := metadata.Open()
-		Expect(err).NotTo(HaveOccurred())
+			f, err := metadata.Open()
+			Expect(err).NotTo(HaveOccurred())
 
-		contents, err := ioutil.ReadAll(f)
-		Expect(err).NotTo(HaveOccurred())
+			contents, err := ioutil.ReadAll(f)
+			Expect(err).NotTo(HaveOccurred())
 
-		Expect(string(contents)).To(gomegamatchers.MatchYAML(expectedMetadata))
+			Expect(string(contents)).To(gomegamatchers.MatchYAML(expectedMetadata))
+		})
 	})
 })
