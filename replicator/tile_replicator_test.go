@@ -2,12 +2,12 @@ package replicator_test
 
 import (
 	"archive/zip"
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	gomegamatchers "github.com/pivotal-cf-experimental/gomegamatchers"
 	"github.com/pivotal-cf/replicator/replicator"
 )
 
@@ -51,7 +51,6 @@ var _ = Describe("tile replicator", func() {
 
 		var metadata *zip.File
 		for _, file := range zr.File {
-			fmt.Println(file.Name)
 			if file.Name == "metadata/some-product.yml" {
 				metadata = file
 			}
@@ -64,6 +63,6 @@ var _ = Describe("tile replicator", func() {
 		contents, err := ioutil.ReadAll(f)
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(string(contents)).To(Equal(expectedMetadata))
+		Expect(string(contents)).To(gomegamatchers.MatchYAML(expectedMetadata))
 	})
 })

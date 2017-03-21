@@ -49,7 +49,7 @@ form_types:
       the subnet CIDR block that you defined in the Ops Manager network configuration.
       If you have a load balancer, configure it to point to these IPs.
     label: Router IPs
-    reference: .router.static_ips
+    reference: .isolated_router.static_ips
   - description: Enter a CIDR subnet mask specifying the range of available IP addresses
       to be assigned to your app containers. This must be different from the network
       used by the system VMs.
@@ -170,7 +170,7 @@ job_types:
         gorouter:
           secret: (( ..cf.uaa.gorouter_client_credentials.password ))
   max_in_flight: 1
-  name: router
+  name: isolated_router
   property_blueprints:
   - configurable: true
     name: static_ips

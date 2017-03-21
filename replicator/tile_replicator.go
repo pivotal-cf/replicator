@@ -25,28 +25,7 @@ func NewTileReplicator() TileReplicator {
 	return TileReplicator{}
 }
 
-type Metadata struct {
-	Name                     string
-	Releases                 []interface{}
-	StemcellCriteria         interface{}
-	Description              string
-	FormTypes                []interface{} `yaml:"form_types"`
-	IconImage                string        `yaml:"icon_image"`
-	InstallTimeVerifiers     interface{}   `yaml:"install_time_verifiers"`
-	JobTypes                 []interface{} `yaml:"job_types"`
-	Label                    string
-	MetadataVersion          string        `yaml:"metadata_version"`
-	MinimumVersionForUpgrade string        `yaml:"minimum_version_for_upgrade"`
-	PostDeployErrands        []interface{} `yaml:"post_deploy_errands"`
-	ProductVersion           string        `yaml:"product_version"`
-	PropertyBlueprints       []interface{} `yaml:"property_blueprints"`
-	ProvidesProductVersions  []interface{} `yaml:"provides_product_versions"`
-	Rank                     int
-	RequiresProductVersions  []interface{} `yaml:"requires_product_versions"`
-	Serial                   bool
-}
-
-func (TileReplicator) Replicate(config ApplicationConfig) error {
+func (t TileReplicator) Replicate(config ApplicationConfig) error {
 	// open the tile
 	srcTileZip, err := zip.OpenReader(config.Path)
 	if err != nil {
@@ -95,10 +74,30 @@ func (TileReplicator) Replicate(config ApplicationConfig) error {
 
 			metadata.Name = defaultIsoSegNamePrefix + "-" + config.Name
 
+			t.findAndReplaceJobTypeName(metadata.JobTypes, "isolated_router", fmt.Sprintf("isolated_router_%s", config.Name))
+			t.findAndReplaceFormTypeRef(metadata.FormTypes, ".isolated_router.static_ips",
+				fmt.Sprintf(".isolated_router_%s.static_ips", config.Name))
+
+			t.findAndReplaceJobTypeName(metadata.JobTypes, "isolated_diego_cell", fmt.Sprintf("isolated_diego_cell_%s", config.Name))
+			t.findAndReplaceFormTypeRef(metadata.FormTypes, ".isolated_diego_cell.insecure_docker_registry_list",
+				fmt.Sprintf(".isolated_diego_cell_%s.insecure_docker_registry_list", config.Name))
+			t.findAndReplaceFormTypeRef(metadata.FormTypes, ".isolated_diego_cell.placement_tag",
+				fmt.Sprintf(".isolated_diego_cell_%s.placement_tag", config.Name))
+			t.findAndReplaceFormTypeRef(metadata.FormTypes, ".isolated_diego_cell.garden_network_pool",
+				fmt.Sprintf(".isolated_diego_cell_%s.garden_network_pool", config.Name))
+			t.findAndReplaceFormTypeRef(metadata.FormTypes, ".isolated_diego_cell.garden_network_mtu",
+				fmt.Sprintf(".isolated_diego_cell_%s.garden_network_mtu", config.Name))
+			t.findAndReplaceFormTypeRef(metadata.FormTypes, ".isolated_diego_cell.executor_memory_capacity",
+				fmt.Sprintf(".isolated_diego_cell_%s.executor_memory_capacity", config.Name))
+			t.findAndReplaceFormTypeRef(metadata.FormTypes, ".isolated_diego_cell.executor_disk_capacity",
+				fmt.Sprintf(".isolated_diego_cell_%s.executor_disk_capacity", config.Name))
+
 			contentsYaml, err := yaml.Marshal(metadata)
 			if err != nil {
 				panic(err)
 			}
+
+			// contentsYamlStr := strings.Replace(string(contentsYaml), "isolated_diego_cell", "isolated_diego_cell_"+config.Name, -1)
 			_, err = dstFile.Write(contentsYaml)
 		} else {
 			// copy srcFile contents to destination
@@ -112,7 +111,45 @@ func (TileReplicator) Replicate(config ApplicationConfig) error {
 		}
 	}
 
-	fmt.Println(config.Output)
-
 	return nil
+}
+
+func (TileReplicator) findAndReplaceFormTypeRef(formTypes []*FormType, ref, replacementRef string) bool {
+	formIndex := -1
+	inputIndex := -1
+
+	for i, formType := range formTypes {
+		for j, input := range formType.PropertyInputs {
+			if input.Reference == ref {
+				formIndex = i
+				inputIndex = j
+				break
+			}
+		}
+	}
+
+	if formIndex == -1 || inputIndex == -1 {
+		return false
+	}
+
+	formTypes[formIndex].PropertyInputs[inputIndex].Reference = replacementRef
+	return true
+}
+
+func (TileReplicator) findAndReplaceJobTypeName(jobTypes []*JobType, name, replacementName string) bool {
+	jobTypeIndex := -1
+
+	for i, jobType := range jobTypes {
+		if jobType.Name == name {
+			jobTypeIndex = i
+			break
+		}
+	}
+
+	if jobTypeIndex == -1 {
+		return false
+	}
+
+	jobTypes[jobTypeIndex].Name = replacementName
+	return true
 }
