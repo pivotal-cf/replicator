@@ -2,13 +2,22 @@ package replicator
 
 import (
 	"archive/zip"
+	"bytes"
 	"fmt"
 	"io"
 	"os"
 	"regexp"
+
+	yaml "gopkg.in/yaml.v2"
 )
 
 var metadataRegexp = regexp.MustCompile(`metadata\/.*\.yml$`)
+
+var ymlRegexp = regexp.MustCompile(`.*\.yml$`)
+var defaultIsoSegNamePrefix = "p-isolation-segment"
+var defaultIsoSegCellNamePrefix = ".isolated_diego_cell"
+
+// var defaultIsoSegRouterNamePrefix = ".isolated_router"
 
 type TileReplicator struct{}
 
@@ -21,19 +30,19 @@ type Metadata struct {
 	Releases                 []interface{}
 	StemcellCriteria         interface{}
 	Description              string
-	FormType                 []string
-	IconImage                string
-	InstallTimeVerifiers     interface{}
-	JobTypes                 []interface{}
+	FormTypes                []interface{} `yaml:"form_types"`
+	IconImage                string        `yaml:"icon_image"`
+	InstallTimeVerifiers     interface{}   `yaml:"install_time_verifiers"`
+	JobTypes                 []interface{} `yaml:"job_types"`
 	Label                    string
-	MetadataVersion          string
-	MinimumVersionForUpgrade string
-	PostDeployErrands        []interface{}
-	ProductVersion           string
-	PropertyBlueprints       []interface{}
-	ProvidesProductVersions  []interface{}
+	MetadataVersion          string        `yaml:"metadata_version"`
+	MinimumVersionForUpgrade string        `yaml:"minimum_version_for_upgrade"`
+	PostDeployErrands        []interface{} `yaml:"post_deploy_errands"`
+	ProductVersion           string        `yaml:"product_version"`
+	PropertyBlueprints       []interface{} `yaml:"property_blueprints"`
+	ProvidesProductVersions  []interface{} `yaml:"provides_product_versions"`
 	Rank                     int
-	RequiresProductVersions  []interface{}
+	RequiresProductVersions  []interface{} `yaml:"requires_product_versions"`
 	Serial                   bool
 }
 
@@ -71,10 +80,29 @@ func (TileReplicator) Replicate(config ApplicationConfig) error {
 			panic(err)
 		}
 
-		// copy srcFile contents to destination
-		_, err = io.Copy(dstFile, srcFileReader)
-		if err != nil {
-			panic(err)
+		if metadataRegexp.MatchString(srcFile.Name) {
+			buf := new(bytes.Buffer)
+
+			_, err = buf.ReadFrom(srcFileReader)
+			if err != nil {
+				panic(err)
+			}
+
+			contents := buf.Bytes()
+
+			var metadata Metadata
+			yaml.Unmarshal(contents, &metadata)
+
+			metadata.Name = defaultIsoSegNamePrefix + "-" + config.Name
+
+			contentsYaml, err := yaml.Marshal(metadata)
+			if err != nil {
+				panic(err)
+			}
+			_, err = dstFile.Write(contentsYaml)
+		} else {
+			// copy srcFile contents to destination
+			_, err = io.Copy(dstFile, srcFileReader)
 		}
 
 		// close the srcFile
@@ -82,10 +110,6 @@ func (TileReplicator) Replicate(config ApplicationConfig) error {
 		if err != nil {
 			panic(err)
 		}
-
-		// if metadataRegexp.MatchString(srcFile.Name) {
-		// 	continue
-		// }
 	}
 
 	fmt.Println(config.Output)

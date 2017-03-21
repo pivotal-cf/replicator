@@ -52,7 +52,7 @@ var _ = Describe("tile replicator", func() {
 		var metadata *zip.File
 		for _, file := range zr.File {
 			fmt.Println(file.Name)
-			if file.Name == "some-product.yml" {
+			if file.Name == "metadata/some-product.yml" {
 				metadata = file
 			}
 		}
