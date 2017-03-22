@@ -72,45 +72,7 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 				panic(err)
 			}
 
-			if metadata.Name != defaultIsoSegName {
-				return errors.New("the replicator does not replicate replicants")
-			}
-
-			metadata.Name = defaultIsoSegName + "-" + config.Name
-
-			if err := metadata.RenameJob(defaultRouterJobType, fmt.Sprintf("isolated_router_%s", config.Name)); err != nil {
-				return err
-			}
-
-			if err := metadata.RenameFormTypeRef(defaultRouterStaticIPs, fmt.Sprintf(".isolated_router_%s.static_ips", config.Name)); err != nil {
-				return err
-			}
-
-			if err := metadata.RenameJob(defaultCellJobType, fmt.Sprintf("%s_%s", defaultCellJobType, config.Name)); err != nil {
-				return err
-			}
-
-			if err := metadata.RenameFormTypeRef(defaultCellDockerFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.insecure_docker_registry_list", config.Name)); err != nil {
-				return err
-			}
-
-			if err := metadata.RenameFormTypeRef(defaultCellPlacementTagFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.placement_tag", config.Name)); err != nil {
-				return err
-			}
-
-			if err := metadata.RenameFormTypeRef(defaultCellGardenNetworkPoolFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.garden_network_pool", config.Name)); err != nil {
-				return err
-			}
-
-			if err := metadata.RenameFormTypeRef(defaultCellGardenNetworkMTUFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.garden_network_mtu", config.Name)); err != nil {
-				return err
-			}
-
-			if err := metadata.RenameFormTypeRef(defaultCellExecutorMemoryCapacityFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.executor_memory_capacity", config.Name)); err != nil {
-				return err
-			}
-
-			if err := metadata.RenameFormTypeRef(defaultCellExecutorDiskCapacityFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.executor_disk_capacity", config.Name)); err != nil {
+			if err := t.renameMetadata(&metadata, config); err != nil {
 				return err
 			}
 
@@ -128,6 +90,52 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 		if err != nil {
 			panic(err)
 		}
+	}
+
+	return nil
+}
+
+func (TileReplicator) renameMetadata(metadata *Metadata, config ApplicationConfig) error {
+	if metadata.Name != defaultIsoSegName {
+		return errors.New("the replicator does not replicate replicants")
+	}
+
+	metadata.Name = defaultIsoSegName + "-" + config.Name
+
+	if err := metadata.RenameJob(defaultRouterJobType, fmt.Sprintf("isolated_router_%s", config.Name)); err != nil {
+		return err
+	}
+
+	if err := metadata.RenameFormTypeRef(defaultRouterStaticIPs, fmt.Sprintf(".isolated_router_%s.static_ips", config.Name)); err != nil {
+		return err
+	}
+
+	if err := metadata.RenameJob(defaultCellJobType, fmt.Sprintf("%s_%s", defaultCellJobType, config.Name)); err != nil {
+		return err
+	}
+
+	if err := metadata.RenameFormTypeRef(defaultCellDockerFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.insecure_docker_registry_list", config.Name)); err != nil {
+		return err
+	}
+
+	if err := metadata.RenameFormTypeRef(defaultCellPlacementTagFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.placement_tag", config.Name)); err != nil {
+		return err
+	}
+
+	if err := metadata.RenameFormTypeRef(defaultCellGardenNetworkPoolFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.garden_network_pool", config.Name)); err != nil {
+		return err
+	}
+
+	if err := metadata.RenameFormTypeRef(defaultCellGardenNetworkMTUFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.garden_network_mtu", config.Name)); err != nil {
+		return err
+	}
+
+	if err := metadata.RenameFormTypeRef(defaultCellExecutorMemoryCapacityFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.executor_memory_capacity", config.Name)); err != nil {
+		return err
+	}
+
+	if err := metadata.RenameFormTypeRef(defaultCellExecutorDiskCapacityFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.executor_disk_capacity", config.Name)); err != nil {
+		return err
 	}
 
 	return nil
