@@ -33,27 +33,32 @@ var _ = Describe("metadata", func() {
 	})
 
 	Describe("RenameJob", func() {
-		It("renames the job and returns true", func() {
-			result := metadata.RenameJob("replace-me-job", "replaced-job")
-			Expect(result).To(BeTrue())
+		It("renames the job", func() {
+			err := metadata.RenameJob("replace-me-job", "replaced-job")
+			Expect(err).NotTo(HaveOccurred())
 
 			Expect(metadata.JobTypes[0].Name).To(Equal("replaced-job"))
 			Expect(metadata.JobTypes[1].Name).To(Equal("dont-replace-me-job"))
 		})
 
-		It("returns false when job doesn't exist", func() {
-			result := metadata.RenameJob("where-are-you-job", "replaced-job")
-			Expect(result).To(BeFalse())
+		It("returns an error when job doesn't exist", func() {
+			err := metadata.RenameJob("where-are-you-job", "replaced-job")
+			Expect(err).To(MatchError(`failed to find "where-are-you-job" job`))
 		})
 	})
 
 	Describe("RenameFormTypeRef", func() {
-		It("renames the form type reference and returns true", func() {
-			result := metadata.RenameFormTypeRef(".replace_me_reference.peanut_butter", ".replaced_reference.peanut_butter")
-			Expect(result).To(BeTrue())
+		It("renames the form type reference", func() {
+			err := metadata.RenameFormTypeRef(".replace_me_reference.peanut_butter", ".replaced_reference.peanut_butter")
+			Expect(err).NotTo(HaveOccurred())
 
 			Expect(metadata.FormTypes[0].PropertyInputs[0].Reference).To(Equal(".replaced_reference.peanut_butter"))
 			Expect(metadata.FormTypes[0].PropertyInputs[1].Reference).To(Equal(".dont_replace_me_reference.almond_butter"))
+		})
+
+		It("returns an error when form type ref does not exist", func() {
+			err := metadata.RenameFormTypeRef(".where-are-you-reference.peanut_butter", ".replaced_reference.peanut_butter")
+			Expect(err).To(MatchError(`failed to find ".where-are-you-reference.peanut_butter" form type reference`))
 		})
 	})
 })

@@ -15,14 +15,16 @@ var _ = Describe("tile replicator", func() {
 	var (
 		tileReplicator replicator.TileReplicator
 
-		pathToTile       string
-		pathToOutputTile string
-		expectedMetadata string
+		pathToTile           string
+		pathToDuplicatedTile string
+		pathToOutputTile     string
+		expectedMetadata     string
 	)
 
 	Describe("Replicate", func() {
 		BeforeEach(func() {
 			pathToTile = filepath.Join("fixtures", "some-tile.pivotal")
+			pathToDuplicatedTile = filepath.Join("fixtures", "some-duplicated-tile.pivotal")
 
 			tempDir, err := ioutil.TempDir("", "")
 			Expect(err).NotTo(HaveOccurred())
@@ -66,6 +68,18 @@ var _ = Describe("tile replicator", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(string(contents)).To(gomegamatchers.MatchYAML(expectedMetadata))
+		})
+
+		Context("when the source tile is already duplicated", func() {
+			It("returns an error", func() {
+				err := tileReplicator.Replicate(replicator.ApplicationConfig{
+					Path:   pathToDuplicatedTile,
+					Output: pathToOutputTile,
+					Name:   "magenta",
+				})
+
+				Expect(err).To(MatchError("the replicator does not replicate replicants"))
+			})
 		})
 	})
 })

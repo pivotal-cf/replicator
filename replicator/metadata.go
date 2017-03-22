@@ -1,5 +1,7 @@
 package replicator
 
+import "fmt"
+
 type Metadata struct {
 	Name                     string
 	Releases                 []interface{}
@@ -53,7 +55,7 @@ type JobType struct {
 	Templates           []interface{}
 }
 
-func (m *Metadata) RenameJob(name, replacementName string) bool {
+func (m *Metadata) RenameJob(name, replacementName string) error {
 	jobTypeIndex := -1
 
 	for i, jobType := range m.JobTypes {
@@ -64,14 +66,14 @@ func (m *Metadata) RenameJob(name, replacementName string) bool {
 	}
 
 	if jobTypeIndex == -1 {
-		return false
+		return fmt.Errorf("failed to find %q job", name)
 	}
 
 	m.JobTypes[jobTypeIndex].Name = replacementName
-	return true
+	return nil
 }
 
-func (m *Metadata) RenameFormTypeRef(ref, replacementRef string) bool {
+func (m *Metadata) RenameFormTypeRef(ref, replacementRef string) error {
 	formIndex := -1
 	inputIndex := -1
 
@@ -86,9 +88,9 @@ func (m *Metadata) RenameFormTypeRef(ref, replacementRef string) bool {
 	}
 
 	if formIndex == -1 || inputIndex == -1 {
-		return false
+		return fmt.Errorf("failed to find %q form type reference", ref)
 	}
 
 	m.FormTypes[formIndex].PropertyInputs[inputIndex].Reference = replacementRef
-	return true
+	return nil
 }
