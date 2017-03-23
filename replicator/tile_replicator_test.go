@@ -70,15 +70,41 @@ var _ = Describe("tile replicator", func() {
 			Expect(string(contents)).To(gomegamatchers.MatchYAML(expectedMetadata))
 		})
 
-		Context("when the source tile is already duplicated", func() {
-			It("returns an error", func() {
-				err := tileReplicator.Replicate(replicator.ApplicationConfig{
-					Path:   pathToDuplicatedTile,
-					Output: pathToOutputTile,
-					Name:   "magenta",
-				})
+		Context("error handling", func() {
+			Context("when the source tile is already duplicated", func() {
+				It("returns an error", func() {
+					err := tileReplicator.Replicate(replicator.ApplicationConfig{
+						Path:   pathToDuplicatedTile,
+						Output: pathToOutputTile,
+						Name:   "magenta",
+					})
 
-				Expect(err).To(MatchError("the replicator does not replicate replicants"))
+					Expect(err).To(MatchError("the replicator does not replicate replicants"))
+				})
+			})
+
+			Context("when the source tile cannot be opened", func() {
+				It("returns an error", func() {
+					err := tileReplicator.Replicate(replicator.ApplicationConfig{
+						Path:   "some-bogus-path",
+						Output: pathToOutputTile,
+						Name:   "magenta",
+					})
+
+					Expect(err).To(MatchError("could not open source zip file"))
+				})
+			})
+
+			Context("when creating the destination zip file fails", func() {
+				It("returns an error", func() {
+					err := tileReplicator.Replicate(replicator.ApplicationConfig{
+						Path:   pathToTile,
+						Output: "",
+						Name:   "magenta",
+					})
+
+					Expect(err).To(MatchError("could not create destination tile"))
+				})
 			})
 		})
 	})

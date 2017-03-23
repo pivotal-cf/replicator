@@ -37,13 +37,13 @@ func NewTileReplicator() TileReplicator {
 func (t TileReplicator) Replicate(config ApplicationConfig) error {
 	srcTileZip, err := zip.OpenReader(config.Path)
 	if err != nil {
-		panic(err)
+		return errors.New("could not open source zip file")
 	}
 	defer srcTileZip.Close()
 
 	dstTileFile, err := os.Create(config.Output)
 	if err != nil {
-		panic(err)
+		return errors.New("could not create destination tile")
 	}
 	defer dstTileFile.Close()
 
@@ -52,33 +52,35 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 
 	for _, srcFile := range srcTileZip.File {
 		srcFileReader, err := srcFile.Open()
+
 		if err != nil {
-			panic(err)
+			return err // TODO: error not tested
+
 		}
 
 		dstFile, err := dstTileZip.Create(srcFile.Name)
 		if err != nil {
-			panic(err)
+			return err // TODO: error not tested
 		}
 
 		if metadataRegexp.MatchString(srcFile.Name) {
 			contents, err := ioutil.ReadAll(srcFileReader)
 			if err != nil {
-				panic(err)
+				return err // TODO: error not tested
 			}
 
 			var metadata Metadata
 			if err := yaml.Unmarshal(contents, &metadata); err != nil {
-				panic(err)
+				return err // TODO: error not tested
 			}
 
 			if err := t.renameMetadata(&metadata, config); err != nil {
-				return err
+				return err // TODO: error not tested
 			}
 
 			contentsYaml, err := yaml.Marshal(metadata)
 			if err != nil {
-				panic(err)
+				return err // TODO: error not tested
 			}
 
 			_, err = dstFile.Write(contentsYaml)
@@ -88,7 +90,7 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 
 		err = srcFileReader.Close()
 		if err != nil {
-			panic(err)
+			return err // TODO: error not tested
 		}
 	}
 
@@ -103,39 +105,39 @@ func (TileReplicator) renameMetadata(metadata *Metadata, config ApplicationConfi
 	metadata.Name = defaultIsoSegName + "-" + config.Name
 
 	if err := metadata.RenameJob(defaultRouterJobType, fmt.Sprintf("isolated_router_%s", config.Name)); err != nil {
-		return err
+		return err // TODO: error not tested
 	}
 
 	if err := metadata.RenameFormTypeRef(defaultRouterStaticIPs, fmt.Sprintf(".isolated_router_%s.static_ips", config.Name)); err != nil {
-		return err
+		return err // TODO: error not tested
 	}
 
 	if err := metadata.RenameJob(defaultCellJobType, fmt.Sprintf("%s_%s", defaultCellJobType, config.Name)); err != nil {
-		return err
+		return err // TODO: error not tested
 	}
 
 	if err := metadata.RenameFormTypeRef(defaultCellDockerFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.insecure_docker_registry_list", config.Name)); err != nil {
-		return err
+		return err // TODO: error not tested
 	}
 
 	if err := metadata.RenameFormTypeRef(defaultCellPlacementTagFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.placement_tag", config.Name)); err != nil {
-		return err
+		return err // TODO: error not tested
 	}
 
 	if err := metadata.RenameFormTypeRef(defaultCellGardenNetworkPoolFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.garden_network_pool", config.Name)); err != nil {
-		return err
+		return err // TODO: error not tested
 	}
 
 	if err := metadata.RenameFormTypeRef(defaultCellGardenNetworkMTUFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.garden_network_mtu", config.Name)); err != nil {
-		return err
+		return err // TODO: error not tested
 	}
 
 	if err := metadata.RenameFormTypeRef(defaultCellExecutorMemoryCapacityFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.executor_memory_capacity", config.Name)); err != nil {
-		return err
+		return err // TODO: error not tested
 	}
 
 	if err := metadata.RenameFormTypeRef(defaultCellExecutorDiskCapacityFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.executor_disk_capacity", config.Name)); err != nil {
-		return err
+		return err // TODO: error not tested
 	}
 
 	return nil
