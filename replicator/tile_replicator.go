@@ -102,6 +102,7 @@ func (TileReplicator) renameMetadata(metadata *Metadata, config ApplicationConfi
 		return errors.New("the replicator does not replicate replicants")
 	}
 
+	metadata.Label = fmt.Sprintf("%s (%s)", metadata.Label, config.Name)
 	metadata.Name = defaultIsoSegName + "-" + config.Name
 
 	if err := metadata.RenameJob(defaultRouterJobType, fmt.Sprintf("isolated_router_%s", config.Name)); err != nil {
