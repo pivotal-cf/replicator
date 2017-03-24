@@ -1,6 +1,8 @@
 package replicator_test
 
 import (
+	"errors"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -15,13 +17,13 @@ var _ = Describe("replicator", func() {
 		app            replicator.Application
 	)
 
-	Describe("Run", func() {
-		BeforeEach(func() {
-			argParser = &fakes.ArgParser{}
-			tileReplicator = &fakes.TileReplicator{}
-			app = replicator.NewApplication(argParser, tileReplicator)
-		})
+	BeforeEach(func() {
+		argParser = &fakes.ArgParser{}
+		tileReplicator = &fakes.TileReplicator{}
+		app = replicator.NewApplication(argParser, tileReplicator)
+	})
 
+	Describe("Run", func() {
 		It("parses args", func() {
 			err := app.Run([]string{"--path", "/some/tile/path", "--output", "/some/tile/output/path", "--name", "some-name"})
 			Expect(err).NotTo(HaveOccurred())
@@ -31,9 +33,9 @@ var _ = Describe("replicator", func() {
 		})
 
 		It("replicates the tile", func() {
-			argParser.ParseStub = func(_ []string) (replicator.ApplicationConfig, error) {
-				return replicator.ApplicationConfig{Path: "/some/tile/path", Output: "/some/tile/output/path", Name: "some-name"}, nil
-			}
+			argParser.ParseReturns(replicator.ApplicationConfig{Path: "/some/tile/path",
+				Output: "/some/tile/output/path",
+				Name:   "some-name"}, nil)
 			err := app.Run([]string{"--path", "/some/tile/path", "--output", "/some/tile/output/path", "--name", "some-name"})
 			Expect(err).NotTo(HaveOccurred())
 
@@ -44,4 +46,21 @@ var _ = Describe("replicator", func() {
 		})
 	})
 
+	Context("when an error occurs", func() {
+		Context("when the args cannot be parsed", func() {
+			It("returns an error", func() {
+				argParser.ParseReturns(replicator.ApplicationConfig{}, errors.New("a parse error occurred"))
+				err := app.Run([]string{"does not matter"})
+				Expect(err).To(MatchError("a parse error occurred"))
+			})
+		})
+
+		Context("when the tile cannot be replicated", func() {
+			It("returns an error", func() {
+				tileReplicator.ReplicateReturns(errors.New("a replication error occurred"))
+				err := app.Run([]string{"does not matter"})
+				Expect(err).To(MatchError("a replication error occurred"))
+			})
+		})
+	})
 })
