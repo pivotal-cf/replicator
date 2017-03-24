@@ -7,7 +7,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	gomegamatchers "github.com/pivotal-cf-experimental/gomegamatchers"
+
+	"github.com/pivotal-cf-experimental/gomegamatchers"
 	"github.com/pivotal-cf/replicator/replicator"
 )
 

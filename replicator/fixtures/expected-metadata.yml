@@ -371,7 +371,7 @@ job_types:
     release: cflinuxfs2-rootfs
   - name: metron_agent
     release: loggregator
-label: PCF Isolation Segment Blue
+label: PCF Isolation Segment
 metadata_version: "1.10"
 minimum_version_for_upgrade: 1.10.0-build.0
 post_deploy_errands: []
