@@ -16,16 +16,18 @@ var _ = Describe("tile replicator", func() {
 	var (
 		tileReplicator replicator.TileReplicator
 
-		pathToTile           string
-		pathToDuplicatedTile string
-		pathToOutputTile     string
-		expectedMetadata     string
+		pathToTile                string
+		pathToDuplicatedTile      string
+		pathToInvalidYamlMetadata string
+		pathToOutputTile          string
+		expectedMetadata          string
 	)
 
 	Describe("Replicate", func() {
 		BeforeEach(func() {
 			pathToTile = filepath.Join("fixtures", "some-tile.pivotal")
 			pathToDuplicatedTile = filepath.Join("fixtures", "some-duplicated-tile.pivotal")
+			pathToInvalidYamlMetadata = filepath.Join("fixtures", "invalid-metadata.pivotal")
 
 			tempDir, err := ioutil.TempDir("", "")
 			Expect(err).NotTo(HaveOccurred())
@@ -44,7 +46,7 @@ var _ = Describe("tile replicator", func() {
 			err := tileReplicator.Replicate(replicator.ApplicationConfig{
 				Path:   pathToTile,
 				Output: pathToOutputTile,
-				Name:   "magenta",
+				Name:   "Magenta Foo",
 			})
 			Expect(err).NotTo(HaveOccurred())
 
@@ -77,10 +79,23 @@ var _ = Describe("tile replicator", func() {
 					err := tileReplicator.Replicate(replicator.ApplicationConfig{
 						Path:   pathToDuplicatedTile,
 						Output: pathToOutputTile,
-						Name:   "magenta",
+						Name:   "Magenta Foo",
 					})
 
 					Expect(err).To(MatchError("the replicator does not replicate replicants"))
+				})
+			})
+
+			Context("when the metadata is an invalid yaml file", func() {
+				It("returns an error", func() {
+					err := tileReplicator.Replicate(replicator.ApplicationConfig{
+						Path:   pathToInvalidYamlMetadata,
+						Output: pathToOutputTile,
+						Name:   "Magenta Foo",
+					})
+
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("cannot unmarshal"))
 				})
 			})
 
@@ -89,7 +104,7 @@ var _ = Describe("tile replicator", func() {
 					err := tileReplicator.Replicate(replicator.ApplicationConfig{
 						Path:   "some-bogus-path",
 						Output: pathToOutputTile,
-						Name:   "magenta",
+						Name:   "Magenta Foo",
 					})
 
 					Expect(err).To(MatchError("could not open source zip file"))
@@ -101,7 +116,7 @@ var _ = Describe("tile replicator", func() {
 					err := tileReplicator.Replicate(replicator.ApplicationConfig{
 						Path:   pathToTile,
 						Output: "",
-						Name:   "magenta",
+						Name:   "Magenta Foo",
 					})
 
 					Expect(err).To(MatchError("could not create destination tile"))

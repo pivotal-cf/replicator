@@ -28,11 +28,11 @@ var _ = Describe("arg parser", func() {
 		})
 
 		It("parses cli args into a config", func() {
-			config, err := argParser.Parse([]string{"--name", "some-name", "--path", pathToTile, "--output", "/path/to/output.pivotal"})
+			config, err := argParser.Parse([]string{"--name", "_ some-name _", "--path", pathToTile, "--output", "/path/to/output.pivotal"})
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(config).To(Equal(replicator.ApplicationConfig{
-				Name:   "some-name",
+				Name:   "_ some-name _",
 				Path:   pathToTile,
 				Output: "/path/to/output.pivotal",
 			}))
@@ -47,6 +47,20 @@ var _ = Describe("arg parser", func() {
 					})
 
 					Expect(err).To(MatchError("--name is a required argument"))
+				})
+			})
+
+			Context("when the name includes illegal special characters", func() {
+				It("returns an error", func() {
+					invalidName := "$$$isoseg$$$"
+
+					_, err := argParser.Parse([]string{
+						"--path", pathToTile,
+						"--name", invalidName,
+						"--output", "/path/to/output.pivotal",
+					})
+
+					Expect(err).To(MatchError(fmt.Sprintf("Invalid special characters in name: %s", invalidName)))
 				})
 			})
 
