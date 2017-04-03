@@ -11,6 +11,8 @@ import (
 
 type ArgParser struct{}
 
+var maxLen = 10
+
 func NewArgParser() ArgParser {
 	return ArgParser{}
 }
@@ -28,15 +30,11 @@ func (ArgParser) Parse(args []string) (ApplicationConfig, error) {
 
 	if cfg.Name == "" {
 		errMsgs = append(errMsgs, "--name is a required argument")
-	}
-
-	matchLegalCharacters, err := regexp.Match("^[a-zA-Z0-9-_ ]*$", []byte(cfg.Name))
-	if err != nil {
-		errMsgs = append(errMsgs, fmt.Sprintf("error parsing --name flag: %s", err))
-	}
-
-	if !matchLegalCharacters {
-		errMsgs = append(errMsgs, fmt.Sprintf("Invalid special characters in name: %s", cfg.Name))
+	} else {
+		errMsg := parseName(cfg.Name)
+		if errMsg != "" {
+			errMsgs = append(errMsgs, errMsg)
+		}
 	}
 
 	if cfg.Path == "" {
@@ -61,4 +59,21 @@ func (ArgParser) Parse(args []string) (ApplicationConfig, error) {
 	}
 
 	return cfg, nil
+}
+
+func parseName(name string) string {
+	if len(name) > maxLen {
+		return fmt.Sprintf("Name cannot be longer than %d characters", maxLen)
+	}
+
+	matchLegalCharacters, err := regexp.Match("^[a-zA-Z0-9-_ ]*$", []byte(name))
+	if err != nil {
+		return fmt.Sprintf("error parsing --name flag: %s", err)
+	}
+
+	if !matchLegalCharacters {
+		return fmt.Sprintf("Invalid special characters in name: %s", name)
+	}
+
+	return ""
 }
