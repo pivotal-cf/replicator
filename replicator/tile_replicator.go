@@ -99,7 +99,8 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 
 func (TileReplicator) renameMetadata(metadata *Metadata, config ApplicationConfig) error {
 	if metadata.Name != defaultIsoSegName {
-		return errors.New("the replicator does not replicate replicants")
+		return fmt.Errorf("the replicator does not replicate %s, supported tiles are [%s]",
+			metadata.Name, defaultIsoSegName)
 	}
 
 	metadata.Label = fmt.Sprintf("%s (%s)", metadata.Label, config.Name)

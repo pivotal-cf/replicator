@@ -74,7 +74,7 @@ var _ = Describe("tile replicator", func() {
 		})
 
 		Context("error handling", func() {
-			Context("when the source tile is already duplicated", func() {
+			Context("when the source tile is not p-isolation-segment", func() {
 				It("returns an error", func() {
 					err := tileReplicator.Replicate(replicator.ApplicationConfig{
 						Path:   pathToDuplicatedTile,
@@ -82,7 +82,9 @@ var _ = Describe("tile replicator", func() {
 						Name:   "Magenta Foo",
 					})
 
-					Expect(err).To(MatchError("the replicator does not replicate replicants"))
+					Expect(err).To(MatchError("the replicator does not replicate " +
+						"p-isolation-segment-already-duplicated, supported tiles are " +
+						"[p-isolation-segment]"))
 				})
 			})
 
