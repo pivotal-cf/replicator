@@ -41,6 +41,10 @@ form_types:
       Controller.
     label: Segment Name
     reference: .isolated_diego_cell_magenta_foo.placement_tag
+  - description: Override DNS servers to be used in containers. Defaults to the same
+      as the host. A comma-separated list of servers can be specified.
+    label: DNS Servers
+    reference: .isolated_diego_cell_magenta_foo.dns_servers
 - description: Configure security and routing services for your isolation segment.
   label: Networking
   name: networking
@@ -293,6 +297,7 @@ job_types:
       http_proxy: (( $ops_manager.http_proxy ))
       https_proxy: (( $ops_manager.https_proxy ))
       no_proxy: (( $ops_manager.no_proxy ))
+      dns_servers: (( dns_servers.parsed_strings ))
   max_in_flight: 10%
   name: isolated_diego_cell_magenta_foo
   property_blueprints:
@@ -327,6 +332,10 @@ job_types:
   - configurable: true
     name: placement_tag
     type: string
+  - configurable: true
+    name: dns_servers
+    optional: true
+    type: string_list
   resource_definitions:
   - configurable: true
     constraints:

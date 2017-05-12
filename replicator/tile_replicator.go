@@ -27,6 +27,7 @@ const (
 	defaultCellGardenNetworkMTUFormTypeRef       = ".isolated_diego_cell.garden_network_mtu"
 	defaultCellExecutorMemoryCapacityFormTypeRef = ".isolated_diego_cell.executor_memory_capacity"
 	defaultCellExecutorDiskCapacityFormTypeRef   = ".isolated_diego_cell.executor_disk_capacity"
+	defaultCellDNSServersFormTypeRef             = ".isolated_diego_cell.dns_servers"
 )
 
 type TileReplicator struct{}
@@ -144,6 +145,10 @@ func (TileReplicator) renameMetadata(metadata *Metadata, config ApplicationConfi
 	}
 
 	if err := metadata.RenameFormTypeRef(defaultCellExecutorDiskCapacityFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.executor_disk_capacity", jobPropertyName)); err != nil {
+		return err
+	}
+
+	if err := metadata.RenameFormTypeRef(defaultCellDNSServersFormTypeRef, fmt.Sprintf(".isolated_diego_cell_%s.dns_servers", jobPropertyName)); err != nil {
 		return err
 	}
 
