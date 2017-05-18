@@ -54,12 +54,6 @@ form_types:
       If you have a load balancer, configure it to point to these IPs.
     label: Router IPs
     reference: .isolated_router_magenta_foo.static_ips
-  - description: Enter a CIDR subnet mask specifying the range of available IP addresses
-      to be assigned to your app containers. This must be different from the network
-      used by the system VMs.
-    label: Applications Subnet (Only change this if you need to avoid address collision
-      with a third-party service on the same subnet.)
-    reference: .isolated_diego_cell_magenta_foo.garden_network_pool
   - description: The default 1454 bytes is fine for most cases, but you might need
       less, such as for networks that use GRE tunnels.
     label: Applications Network Maximum Transmission Unit (MTU) (in bytes)
@@ -86,6 +80,37 @@ form_types:
     - label: Forward unencrypted traffic to Elastic Runtime Router. Assumes an external
         load balancer is configured to forward unencrypted traffic.
       reference: .properties.networking_point_of_entry.terminate_before_router
+  - label: Enabling the Container-to-Container network will allow policy-driven, direct
+      communication between containers on an overlay network occupying the 10.255.0.0/16
+      range.
+    reference: .properties.container_networking
+    selector_property_inputs:
+    - label: Enable
+      property_inputs:
+      - description: Defines the range of the overlay network. The CIDR must specify
+          a RFC 1918 range. Defaults to 10.255.0.0/16.
+        label: Network CIDR
+        placeholder: 10.255.0.0/16
+        reference: .properties.container_networking.enable.network_cidr
+      - description: Host port used for receiving VXLAN packets. Defaults to 4789.
+        label: VXLAN Tunnel Endpoint Port
+        reference: .properties.container_networking.enable.vtep_port
+      reference: .properties.container_networking.enable
+    - label: Disable
+      property_inputs:
+      - description: Enter a CIDR subnet mask specifying the range of available IP
+          addresses to be assigned to your app containers. This must be different
+          from the network used by the system VMs.
+        label: Applications Subnet (Only change this if you need to avoid address
+          collision with a third-party service on the same subnet.)
+        reference: .properties.container_networking.disable.garden_network_pool
+      - description: Enter a CIDR subnet mask specifying the range of available IP
+          addresses to be assigned to your app containers. This must be different
+          from the network used by the system VMs.
+        label: Applications Subnet (Only change this if you need to avoid address
+          collision with a third-party service on the same subnet.)
+        reference: .isolated_diego_cell_magenta_foo.garden_network_pool
+      reference: .properties.container_networking.disable
 - description: These are several features that may require a greater understanding
     of Cloud Foundry system components and their more recently introduced capabilities.
   label: Advanced Features

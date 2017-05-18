@@ -27,7 +27,7 @@ type FormType struct {
 	Description    string
 	Label          string
 	Name           string
-	PropertyInputs []PropertyInput `yaml:"property_inputs"`
+	PropertyInputs []*PropertyInput `yaml:"property_inputs"`
 }
 
 type PropertyInput struct {
@@ -35,7 +35,13 @@ type PropertyInput struct {
 	Label                  string
 	Placeholder            string `yaml:"placeholder,omitempty"`
 	Reference              string
-	SelectorPropertyInputs []interface{} `yaml:"selector_property_inputs,omitempty"`
+	SelectorPropertyInputs []*SelectorPropertyInput `yaml:"selector_property_inputs,omitempty"`
+}
+
+type SelectorPropertyInput struct {
+	Label          string
+	Reference      string
+	PropertyInputs []*PropertyInput `yaml:"property_inputs,omitempty"`
 }
 
 type JobType struct {
@@ -74,23 +80,21 @@ func (m *Metadata) RenameJob(name, replacementName string) error {
 }
 
 func (m *Metadata) RenameFormTypeRef(ref, replacementRef string) error {
-	formIndex := -1
-	inputIndex := -1
-
-	for i, formType := range m.FormTypes {
-		for j, input := range formType.PropertyInputs {
+	for _, formType := range m.FormTypes {
+		for _, input := range formType.PropertyInputs {
 			if input.Reference == ref {
-				formIndex = i
-				inputIndex = j
-				break
+				input.Reference = replacementRef
+				return nil
+			}
+			for _, selectorInput := range input.SelectorPropertyInputs {
+				for _, propertyInput := range selectorInput.PropertyInputs {
+					if propertyInput.Reference == ref {
+						propertyInput.Reference = replacementRef
+						return nil
+					}
+				}
 			}
 		}
 	}
-
-	if formIndex == -1 || inputIndex == -1 {
-		return fmt.Errorf("failed to find %q form type reference", ref)
-	}
-
-	m.FormTypes[formIndex].PropertyInputs[inputIndex].Reference = replacementRef
-	return nil
+	return fmt.Errorf("failed to find %q form type reference", ref)
 }

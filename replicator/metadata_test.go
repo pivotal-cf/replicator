@@ -16,9 +16,20 @@ var _ = Describe("metadata", func() {
 		metadata = replicator.Metadata{
 			FormTypes: []*replicator.FormType{
 				{
-					PropertyInputs: []replicator.PropertyInput{
+					PropertyInputs: []*replicator.PropertyInput{
 						{Reference: ".replace_me_reference.peanut_butter"},
 						{Reference: ".dont_replace_me_reference.almond_butter"},
+						{
+							Reference: ".dont_replace_me_reference.yak_butter",
+							SelectorPropertyInputs: []*replicator.SelectorPropertyInput{
+								{
+									PropertyInputs: []*replicator.PropertyInput{
+										{Reference: ".replace_me_reference.apple_butter"},
+										{Reference: ".dont_replace_me_reference.cashew_butter"},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -60,6 +71,25 @@ var _ = Describe("metadata", func() {
 		It("returns an error when form type ref does not exist", func() {
 			err := metadata.RenameFormTypeRef(".where-are-you-reference.peanut_butter", ".replaced_reference.peanut_butter")
 			Expect(err).To(MatchError(`failed to find ".where-are-you-reference.peanut_butter" form type reference`))
+		})
+
+		Context("when the form type reference is in a selector", func() {
+			It("renames the form type reference", func() {
+				err := metadata.RenameFormTypeRef(".replace_me_reference.apple_butter", ".replaced_reference.apple_butter")
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(metadata.FormTypes[0].PropertyInputs[2].SelectorPropertyInputs[0].PropertyInputs[0].Reference).To(
+					Equal(".replaced_reference.apple_butter"))
+				Expect(metadata.FormTypes[0].PropertyInputs[2].Reference).To(Equal(".dont_replace_me_reference.yak_butter"))
+				Expect(metadata.FormTypes[0].PropertyInputs[2].SelectorPropertyInputs[0].PropertyInputs[1].Reference).To(
+					Equal(".dont_replace_me_reference.cashew_butter"))
+			})
+
+			It("returns an error when form type ref does not exist", func() {
+				err := metadata.RenameFormTypeRef(".where-are-you-reference.apple_butter", ".replaced_reference.apple_butter")
+				Expect(err).To(MatchError(`failed to find ".where-are-you-reference.apple_butter" form type reference`))
+			})
+
 		})
 	})
 })
