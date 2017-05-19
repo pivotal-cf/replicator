@@ -73,6 +73,45 @@ var _ = Describe("tile replicator", func() {
 			Expect(string(contents)).To(gomegamatchers.MatchYAML(expectedMetadata))
 		})
 
+		Context("when a property does not exist in the tile metadata", func() {
+			It("does not fail to replicate the tile", func() {
+				pathToTile = filepath.Join("fixtures", "some-tile-with-missing-property.pivotal")
+				expectedMetadataFile := filepath.Join("fixtures", "expected-metadata-with-missing-property.yml")
+				contents, err := ioutil.ReadFile(expectedMetadataFile)
+				Expect(err).NotTo(HaveOccurred())
+				expectedMetadata = string(contents)
+
+				err = tileReplicator.Replicate(replicator.ApplicationConfig{
+					Path:   pathToTile,
+					Output: pathToOutputTile,
+					Name:   "Magenta Foo",
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				zr, err := zip.OpenReader(pathToOutputTile)
+				Expect(err).NotTo(HaveOccurred())
+
+				defer zr.Close()
+
+				var metadata *zip.File
+				for _, file := range zr.File {
+					if file.Name == "metadata/some-product.yml" {
+						metadata = file
+						break
+					}
+				}
+				Expect(metadata).NotTo(BeNil())
+
+				f, err := metadata.Open()
+				Expect(err).NotTo(HaveOccurred())
+
+				contents, err = ioutil.ReadAll(f)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(string(contents)).To(gomegamatchers.MatchYAML(expectedMetadata))
+			})
+		})
+
 		Context("error handling", func() {
 			Context("when the source tile is not p-isolation-segment", func() {
 				It("returns an error", func() {

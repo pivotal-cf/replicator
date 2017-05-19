@@ -1,473 +1,84 @@
 name: p-isolation-segment-magenta-foo
-releases:
-- name: cflinuxfs2-rootfs
-  file: cflinuxfs2-rootfs-1.50.0-3363.10.0.tgz
-  version: 1.50.0
-- name: consul
-  file: consul-152.0.0-3363.9.0.tgz
-  version: "152"
-- name: diego
-  file: diego-1.7.4-3363.10.0.tgz
-  version: 1.7.4
-- name: garden-runc
-  file: garden-runc-1.1.1-3363.10.0.tgz
-  version: 1.1.1
-- name: loggregator
-  file: loggregator-77.0.0-3363.10.0.tgz
-  version: "77"
-- name: routing
-  file: routing-0.146.3-3363.10.0.tgz
-  version: 0.146.3
-stemcell_criteria:
-  version: "3363.10"
-  os: ubuntu-trusty
-  requires_cpi: false
-description: Gives developers the ability to push apps to a dedicated set of compute
-  instances.
+releases: []
+stemcell_criteria: null
+description: ""
 form_types:
-- description: Enable custom configuration that supports your applications at a container
-    level.
-  label: Application Containers
-  name: application_containers
+- description: It's a form
+  label: Some Form
+  name: some_form
   property_inputs:
-  - description: If you use private Docker image registries that are secured with
-      self-signed certificates, enter them here as a comma-delimited list. List each
-      registry as either an IP:Port tuple or a Hostname:Port tuple.
-    label: Private Docker Insecure Registry Whitelist
-    placeholder: 10.10.10.10:8888,example.com:8888
+  - label: ""
     reference: .isolated_diego_cell_magenta_foo.insecure_docker_registry_list
-  - description: This field is used as the placement tag for your Diego Cells. It
-      should be unique. Use this name to configure an Isolation Segment with the Cloud
-      Controller.
-    label: Segment Name
+  - label: ""
     reference: .isolated_diego_cell_magenta_foo.placement_tag
-  - description: Override DNS servers to be used in containers. Defaults to the same
-      as the host. A comma-separated list of servers can be specified.
-    label: DNS Servers
+  - label: ""
     reference: .isolated_diego_cell_magenta_foo.dns_servers
-- description: Configure security and routing services for your isolation segment.
-  label: Networking
-  name: networking
+- description: It's another form
+  label: Some Other Form
+  name: some_other_form
   property_inputs:
-  - description: Enter static IP address(es) for the Router(s), which must be within
-      the subnet CIDR block that you defined in the Ops Manager network configuration.
-      If you have a load balancer, configure it to point to these IPs.
-    label: Router IPs
+  - label: ""
     reference: .isolated_router_magenta_foo.static_ips
-  - description: The default 1454 bytes is fine for most cases, but you might need
-      less, such as for networks that use GRE tunnels.
-    label: Applications Network Maximum Transmission Unit (MTU) (in bytes)
+  - label: ""
+    reference: .isolated_diego_cell_magenta_foo.garden_network_pool
+  - label: ""
     reference: .isolated_diego_cell_magenta_foo.garden_network_mtu
-  - label: TLS Termination Certificates
-    reference: .properties.networking_point_of_entry
+  - label: Some Selector
+    reference: .properties.some_selector
     selector_property_inputs:
-    - label: Forward SSL to Isolation Segment Router with provided certificates. Assumes
-        an external load balancer is configured to forward encrypted traffic.
+    - label: It's a selector
+      reference: .properties.some_selector.some_choice
       property_inputs:
-      - description: Required for SSL encryption between the load balancer and router(s).
-        label: Router SSL Termination Certificate and Private Key
-        reference: .properties.networking_point_of_entry.terminate_at_router.ssl_rsa_certificate
-      - description: Router ciphers are read in Golang and should use underscores
-          instead of dashes in their names e.g. TLS_RSA_WITH_RC4_128_SHA:TLS_RSA_WITH_AES_128_CBC_SHA
-        label: Router SSL Ciphers
-        reference: .properties.networking_point_of_entry.terminate_at_router.ssl_ciphers
-      reference: .properties.networking_point_of_entry.terminate_at_router
-    - label: Forward SSL to Isolation Segment Router with ERT Router certificates.
-        Assumes an external load balancer is configured to forward encrypted traffic.
-        Will inherit the certificates provided to the Router in the Elastic Runtime
-        Tile.
-      reference: .properties.networking_point_of_entry.terminate_at_router_ert_cert
-    - label: Forward unencrypted traffic to Elastic Runtime Router. Assumes an external
-        load balancer is configured to forward unencrypted traffic.
-      reference: .properties.networking_point_of_entry.terminate_before_router
-  - label: Enabling the Container-to-Container network will allow policy-driven, direct
-      communication between containers on an overlay network occupying the 10.255.0.0/16
-      range.
-    reference: .properties.container_networking
-    selector_property_inputs:
-    - label: Enable
-      property_inputs:
-      - description: Defines the range of the overlay network. The CIDR must specify
-          a RFC 1918 range. Defaults to 10.255.0.0/16.
-        label: Network CIDR
-        placeholder: 10.255.0.0/16
-        reference: .properties.container_networking.enable.network_cidr
-      - description: Host port used for receiving VXLAN packets. Defaults to 4789.
-        label: VXLAN Tunnel Endpoint Port
-        reference: .properties.container_networking.enable.vtep_port
-      reference: .properties.container_networking.enable
-    - label: Disable
-      property_inputs:
-      - description: Enter a CIDR subnet mask specifying the range of available IP
-          addresses to be assigned to your app containers. This must be different
-          from the network used by the system VMs.
-        label: Applications Subnet (Only change this if you need to avoid address
-          collision with a third-party service on the same subnet.)
-        reference: .properties.container_networking.disable.garden_network_pool
-      - description: Enter a CIDR subnet mask specifying the range of available IP
-          addresses to be assigned to your app containers. This must be different
-          from the network used by the system VMs.
-        label: Applications Subnet (Only change this if you need to avoid address
-          collision with a third-party service on the same subnet.)
-        reference: .isolated_diego_cell_magenta_foo.garden_network_pool
-      reference: .properties.container_networking.disable
-- description: These are several features that may require a greater understanding
-    of Cloud Foundry system components and their more recently introduced capabilities.
-  label: Advanced Features
-  name: advanced_features
-  property_inputs:
-  - label: Cell Memory Capacity (MB)
+      - label: ""
+        reference: .properties.some_selector.some_choice.some_property
+      - label: ""
+        reference: .properties.some_selector.some_choice.some_other_property
+    - label: ""
+      reference: .properties.some_selector.some_other_choice
+    - label: ""
+      reference: .properties.some_selector.more_choice
+  - label: ""
     reference: .isolated_diego_cell_magenta_foo.executor_memory_capacity
-  - label: Cell Disk Capacity (MB)
+  - label: ""
     reference: .isolated_diego_cell_magenta_foo.executor_disk_capacity
-icon_image: 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
-install_time_verifiers: []
+  - label: ""
+    reference: .isolated_diego_cell_magenta_foo.silk_daemon_client_cert
+  - label: ""
+    reference: .isolated_diego_cell_magenta_foo.network_policy_agent_cert
+icon_image: ""
+install_time_verifiers: null
 job_types:
-- description: Routers route Internet traffic to applications placed in the isolation
-    segment.
-  dynamic_ip: 0
-  instance_definition:
-    configurable: true
-    constraints:
-      min: 0
-    default: 1
-    label: Instances
-    name: instances
-    type: integer
-  label: Router
-  manifest: |
-    request_timeout_in_seconds: (( ..cf.router.request_timeout_in_seconds.value ))
-    networks:
-      apps: default
-    router:
-      tracing:
-        enable_zipkin: (( ..cf.router.enable_zipkin.value ))
-      secure_cookies: (( ..cf.router.disable_insecure_cookies.value ))
-      status:
-        user: router_status
-        password: (( ..cf.router.status_credentials.password ))
-      route_services_secret: (( ..cf.properties.route_services.selected_option.parsed_manifest(secret) ))
-      cipher_suites: (( .properties.networking_point_of_entry.selected_option.parsed_manifest(ssl_ciphers) ))
-      enable_ssl: (( .properties.networking_point_of_entry.selected_option.parsed_manifest(enable_ssl) ))
-      ssl_cert: (( .properties.networking_point_of_entry.selected_option.parsed_manifest(cert_pem) ))
-      ssl_key: (( .properties.networking_point_of_entry.selected_option.parsed_manifest(private_key_pem) ))
-      ssl_skip_validation: (( ..cf.ha_proxy.skip_cert_verify.value ))
-      skip_oauth_tls_verification: true
-      haproxy:
-        health_check_port: 80
-        request_timeout_in_seconds: 300
-      drain_wait: (( ..cf.router.drain_wait.value ))
-      load_balancer_healthy_threshold: (( ..cf.router.lb_healthy_threshold.value ))
-    routing_api:
-      enabled: true
-    consul:
-      encrypt_keys:
-      - (( ..cf.properties.consul_encrypt_key.value ))
-      ca_cert: (( $ops_manager.ca_certificate ))
-      agent_cert: (( ..cf.properties.consul_agent_cert.cert_pem ))
-      agent_key: (( ..cf.properties.consul_agent_cert.private_key_pem ))
-      agent:
-        domain: cf.internal
-        servers:
-          lan: (( ..cf.consul_server.ips ))
-    nats:
-      user: (( ..cf.nats.credentials.identity ))
-      password: (( ..cf.nats.credentials.password ))
-      port: 4222
-      machines: (( ..cf.nats.ips ))
-    syslog_daemon_config:
-      address: (( ..cf.properties.syslog_host.value ))
-      port: (( ..cf.properties.syslog_port.value ))
-      transport: (( ..cf.properties.syslog_protocol.value ))
-    metron_agent:
-      deployment: cf
-    metron_endpoint:
-      shared_secret: (( ..cf.doppler.shared_secret_credentials.password ))
-    loggregator:
-      tls:
-        ca_cert: (( $ops_manager.ca_certificate ))
-        metron:
-          cert: (( ..cf.doppler.metron_tls_cert.cert_pem ))
-          key: (( ..cf.doppler.metron_tls_cert.private_key_pem ))
-    uaa:
-      ca_cert: (( $ops_manager.ca_certificate ))
-      ssl:
-        port: 8443
-      sslCertificate: (( ..cf.uaa.ssl_credentials.cert_pem ))
-      sslPrivateKey: (( ..cf.uaa.ssl_credentials.private_key_pem ))
-      clients:
-        gorouter:
-          secret: (( ..cf.uaa.gorouter_client_credentials.password ))
-  max_in_flight: 1
-  name: isolated_router_magenta_foo
-  property_blueprints:
-  - configurable: true
-    name: static_ips
-    optional: true
-    type: ip_ranges
-  resource_definitions:
-  - configurable: true
-    constraints:
-      min: 1024
-    default: 1024
-    label: RAM
-    name: ram
-    type: integer
-  - configurable: true
-    constraints:
-      min: 2048
-    default: 2048
-    label: Ephemeral Disk
-    name: ephemeral_disk
-    type: integer
-  - configurable: false
-    default: 0
-    label: Persistent Disk
-    name: persistent_disk
-    type: integer
-  - configurable: true
-    constraints:
-      min: 1
-      power_of_two: true
-    default: 1
-    label: CPU
-    name: cpu
-    type: integer
-  resource_label: Router
-  serial: true
-  single_az_only: false
-  static_ip: 1
-  templates:
-  - name: consul_agent
-    release: consul
-  - name: gorouter
-    release: routing
-  - name: metron_agent
-    release: loggregator
-- dynamic_ip: 1
-  instance_definition:
-    configurable: true
-    constraints:
-      min: 0
-    default: 3
-    label: Instances
-    name: instances
-    type: integer
-  label: Diego Cell
-  manifest: |
-    diego:
-      executor:
-        disk_capacity_mb: (( executor_disk_capacity.value ))
-        memory_capacity_mb: (( executor_memory_capacity.value ))
-        post_setup_hook: sh -c "rm -f /home/vcap/app/.java-buildpack.log /home/vcap/app/**/.java-buildpack.log"
-        post_setup_user: "root"
-        ca_certs_for_downloads: (( $ops_manager.ca_certificate ))
-      rep:
-        require_tls: true
-        ca_cert: (( $ops_manager.ca_certificate ))
-        server_cert: (( ..cf.properties.rep_server_cert.cert_pem ))
-        server_key: (( ..cf.properties.rep_server_cert.private_key_pem ))
-        use_azure_fault_domains: true
-        bbs:
-          api_location: bbs.service.cf.internal:8889
-          ca_cert: (( $ops_manager.ca_certificate ))
-          client_cert: (( ..cf.properties.bbs_client_cert.cert_pem ))
-          client_key: (( ..cf.properties.bbs_client_cert.private_key_pem ))
-        preloaded_rootfses:
-        - cflinuxfs2:/var/vcap/packages/cflinuxfs2/rootfs
-        placement_tags:
-        - (( placement_tag.value ))
-      cfdot:
-        bbs:
-          ca_cert: (( $ops_manager.ca_certificate ))
-          client_cert: (( ..cf.properties.bbs_client_cert.cert_pem ))
-          client_key: (( ..cf.properties.bbs_client_cert.private_key_pem ))
-    cflinuxfs2-rootfs:
-      trusted_certs: (( $ops_manager.trusted_certificates ))
-    consul:
-      encrypt_keys:
-      - (( ..cf.properties.consul_encrypt_key.value ))
-      ca_cert: (( $ops_manager.ca_certificate ))
-      agent_cert: (( ..cf.properties.consul_agent_cert.cert_pem ))
-      agent_key: (( ..cf.properties.consul_agent_cert.private_key_pem ))
-      server_cert: (( ..cf.properties.consul_server_cert.cert_pem ))
-      server_key: (( ..cf.properties.consul_server_cert.private_key_pem ))
-      agent:
-        domain: cf.internal
-        servers:
-          lan: (( ..cf.consul_server.ips ))
-    syslog_daemon_config:
-      address: (( ..cf.properties.syslog_host.value ))
-      port: (( ..cf.properties.syslog_port.value ))
-      transport: (( ..cf.properties.syslog_protocol.value ))
-    metron_agent:
-      deployment: cf
-    metron_endpoint:
-      shared_secret: (( ..cf.doppler.shared_secret_credentials.password ))
-    loggregator:
-      tls:
-        ca_cert: (( $ops_manager.ca_certificate ))
-        metron:
-          cert: (( ..cf.doppler.metron_tls_cert.cert_pem ))
-          key: (( ..cf.doppler.metron_tls_cert.private_key_pem ))
-    garden:
-      default_container_grace_time: 0
-      persistent_image_list:
-        - "/var/vcap/packages/cflinuxfs2/rootfs"
-      graph_cleanup_threshold_in_mb: (( ..cf.properties.garden_disk_cleanup.selected_option.parsed_manifest(graph_cleanup_threshold_in_mb) ))
-      network_pool: (( garden_network_pool.value ))
-      deny_networks: ["0.0.0.0/0"]
-      network_mtu: (( garden_network_mtu.value ))
-      insecure_docker_registry_list: (( insecure_docker_registry_list.parsed_strings ))
-      http_proxy: (( $ops_manager.http_proxy ))
-      https_proxy: (( $ops_manager.https_proxy ))
-      no_proxy: (( $ops_manager.no_proxy ))
-      dns_servers: (( dns_servers.parsed_strings ))
-  max_in_flight: 10%
-  name: isolated_diego_cell_magenta_foo
-  property_blueprints:
-  - configurable: true
-    constraints:
-      min: 1
-    label: Cell Disk Capacity (in MB)
-    name: executor_disk_capacity
-    optional: true
-    type: integer
-  - configurable: true
-    constraints:
-      min: 1
-    label: Cell Memory Capacity (in MB)
-    name: executor_memory_capacity
-    optional: true
-    type: integer
-  - configurable: true
-    default: 10.254.0.0/22
-    name: garden_network_pool
-    optional: false
-    type: string
-  - configurable: true
-    name: insecure_docker_registry_list
-    optional: true
-    type: string_list
-  - configurable: true
-    default: 1454
-    name: garden_network_mtu
-    optional: false
-    type: integer
-  - configurable: true
-    name: placement_tag
-    type: string
-  - configurable: true
-    name: dns_servers
-    optional: true
-    type: string_list
-  resource_definitions:
-  - configurable: true
-    constraints:
-      min: 2048
-    default: 16384
-    label: RAM
-    name: ram
-    type: integer
-  - configurable: true
-    constraints:
-      min: 4096
-    default: 65536
-    label: Ephemeral Disk
-    name: ephemeral_disk
-    type: integer
-  - configurable: false
-    default: 0
-    label: Persistent Disk
-    name: persistent_disk
-    type: integer
-  - configurable: true
-    constraints:
-      min: 1
-      power_of_two: true
-    default: 2
-    label: CPU
-    name: cpu
-    type: integer
-  resource_label: Diego Cell
-  single_az_only: false
+- dynamic_ip: 0
+  instance_definition: null
+  label: ""
+  manifest: null
+  max_in_flight: null
   static_ip: 0
-  templates:
-  - name: consul_agent
-    release: consul
-  - name: rep
-    release: diego
-  - name: cfdot
-    release: diego
-  - name: garden
-    release: garden-runc
-  - name: cflinuxfs2-rootfs-setup
-    release: cflinuxfs2-rootfs
-  - name: metron_agent
-    release: loggregator
+  name: isolated_router_magenta_foo
+  property_blueprints: []
+  resource_definitions: []
+  resource_label: ""
+  single_az_only: false
+  templates: []
+- dynamic_ip: 0
+  instance_definition: null
+  label: ""
+  manifest: null
+  max_in_flight: null
+  static_ip: 0
+  name: isolated_diego_cell_magenta_foo
+  property_blueprints: []
+  resource_definitions: []
+  resource_label: ""
+  single_az_only: false
+  templates: []
 label: PCF Isolation Segment (Magenta Foo)
-metadata_version: "1.10"
-minimum_version_for_upgrade: 1.10.0-build.0
+metadata_version: ""
+minimum_version_for_upgrade: ""
 post_deploy_errands: []
-product_version: 1.10.0-build.52
-property_blueprints:
-- configurable: true
-  default: terminate_at_router
-  name: networking_point_of_entry
-  option_templates:
-  - name: terminate_at_router
-    named_manifests:
-    - manifest: (( .properties.networking_point_of_entry.terminate_at_router.ssl_ciphers.value
-        ))
-      name: ssl_ciphers
-    - manifest: "true"
-      name: enable_ssl
-    - manifest: (( .properties.networking_point_of_entry.terminate_at_router.ssl_rsa_certificate.cert_pem
-        ))
-      name: cert_pem
-    - manifest: (( .properties.networking_point_of_entry.terminate_at_router.ssl_rsa_certificate.private_key_pem
-        ))
-      name: private_key_pem
-    property_blueprints:
-    - configurable: true
-      name: ssl_rsa_certificate
-      type: rsa_cert_credentials
-    - configurable: true
-      name: ssl_ciphers
-      optional: true
-      type: text
-    select_value: terminate_at_router
-  - name: terminate_at_router_ert_cert
-    named_manifests:
-    - manifest: (( ..cf.properties.networking_point_of_entry.external_ssl.ssl_ciphers.value
-        ))
-      name: ssl_ciphers
-    - manifest: "true"
-      name: enable_ssl
-    - manifest: (( ..cf.properties.networking_point_of_entry.external_ssl.ssl_rsa_certificate.cert_pem
-        ))
-      name: cert_pem
-    - manifest: (( ..cf.properties.networking_point_of_entry.external_ssl.ssl_rsa_certificate.private_key_pem
-        ))
-      name: private_key_pem
-    select_value: terminate_at_router_ert_cert
-  - name: terminate_before_router
-    named_manifests:
-    - manifest: "false"
-      name: enable_ssl
-    - manifest: ""
-      name: ssl_ciphers
-    - manifest: ""
-      name: cert_pem
-    - manifest: ""
-      name: private_key_pem
-    select_value: terminate_before_router
-  type: selector
-provides_product_versions:
-- name: p-isolation-segment
-  version: 1.10.0-build.52
-rank: 89
-requires_product_versions:
-- name: cf
-  version: ~> 1.10.0-build.0
+product_version: ""
+property_blueprints: []
+provides_product_versions: []
+rank: 0
+requires_product_versions: []
 serial: false
