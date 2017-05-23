@@ -60,6 +60,9 @@ job_types:
   resource_label: ""
   single_az_only: false
   templates: []
+  manifest: |
+    router:
+      isolation_segments: ['(( enable_isolated_routing.value ? .isolated_diego_cell_magenta_foo.placement_tag.value : empty_list.value))']
 - dynamic_ip: 0
   instance_definition: null
   label: ""
@@ -72,6 +75,10 @@ job_types:
   resource_label: ""
   single_az_only: false
   templates: []
+  manifest: |
+    diego:
+      rep:
+        placement_tags: [ (( placement_tag.value )) ]
 label: PCF Isolation Segment (Magenta Foo)
 metadata_version: ""
 minimum_version_for_upgrade: ""

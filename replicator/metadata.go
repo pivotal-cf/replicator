@@ -1,7 +1,5 @@
 package replicator
 
-import "fmt"
-
 type Metadata struct {
 	Name                     string
 	Releases                 []interface{}
@@ -59,42 +57,4 @@ type JobType struct {
 	ResourceLabel       string        `yaml:"resource_label"`
 	SingleAzOnly        bool          `yaml:"single_az_only"`
 	Templates           []interface{}
-}
-
-func (m *Metadata) RenameJob(name, replacementName string) error {
-	jobTypeIndex := -1
-
-	for i, jobType := range m.JobTypes {
-		if jobType.Name == name {
-			jobTypeIndex = i
-			break
-		}
-	}
-
-	if jobTypeIndex == -1 {
-		return fmt.Errorf("failed to find %q job", name)
-	}
-
-	m.JobTypes[jobTypeIndex].Name = replacementName
-	return nil
-}
-
-func (m *Metadata) RenameFormTypeRef(ref, replacementRef string) error {
-	for _, formType := range m.FormTypes {
-		for _, input := range formType.PropertyInputs {
-			if input.Reference == ref {
-				input.Reference = replacementRef
-				return nil
-			}
-			for _, selectorInput := range input.SelectorPropertyInputs {
-				for _, propertyInput := range selectorInput.PropertyInputs {
-					if propertyInput.Reference == ref {
-						propertyInput.Reference = replacementRef
-						return nil
-					}
-				}
-			}
-		}
-	}
-	return fmt.Errorf("failed to find %q form type reference", ref)
 }
