@@ -18,6 +18,8 @@ form_types:
   name: some_other_form
   property_inputs:
   - label: ""
+    reference: .isolated_ha_proxy_magenta_foo.trusted_domain_cidrs
+  - label: ""
     reference: .isolated_router_magenta_foo.static_ips
   - label: ""
     reference: .isolated_diego_cell_magenta_foo.garden_network_pool
@@ -48,6 +50,21 @@ form_types:
 icon_image: ""
 install_time_verifiers: null
 job_types:
+- dynamic_ip: 0
+  instance_definition: null
+  label: ""
+  manifest: null
+  max_in_flight: null
+  static_ip: 0
+  name: isolated_ha_proxy_magenta_foo
+  property_blueprints: []
+  resource_definitions: []
+  resource_label: ""
+  single_az_only: false
+  templates: []
+  manifest: |
+    ha_proxy:
+      trusted_domain_cidrs: (( .isolated_ha_proxy_magenta_foo.trusted_domain_cidrs.value ))
 - dynamic_ip: 0
   instance_definition: null
   label: ""

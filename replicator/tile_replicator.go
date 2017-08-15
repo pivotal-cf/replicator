@@ -16,9 +16,10 @@ import (
 var metadataRegexp = regexp.MustCompile(`metadata\/.*\.yml$`)
 
 const (
-	defaultIsoSegName    = "p-isolation-segment"
-	defaultRouterJobType = "isolated_router"
-	defaultCellJobType   = "isolated_diego_cell"
+	defaultIsoSegName     = "p-isolation-segment"
+	defaultRouterJobType  = "isolated_router"
+	defaultCellJobType    = "isolated_diego_cell"
+	defaultHAProxyJobType = "isolated_ha_proxy"
 )
 
 type TileReplicator struct{}
@@ -103,8 +104,10 @@ func (TileReplicator) formatName(config ApplicationConfig) string {
 func (TileReplicator) replaceProperties(metadata string, name string) string {
 	newDiegoCellName := fmt.Sprintf("%s_%s", defaultCellJobType, name)
 	newRouterName := fmt.Sprintf("%s_%s", defaultRouterJobType, name)
+	newHAProxyName := fmt.Sprintf("%s_%s", defaultHAProxyJobType, name)
 
 	cellReplacedmetadata := strings.Replace(metadata, "isolated_diego_cell", newDiegoCellName, -1)
+	cellReplacedmetadata = strings.Replace(cellReplacedmetadata, "isolated_ha_proxy", newHAProxyName, -1)
 	return strings.Replace(cellReplacedmetadata, "isolated_router", newRouterName, -1)
 }
 
