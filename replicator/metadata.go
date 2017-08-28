@@ -34,6 +34,7 @@ type PropertyInput struct {
 	Placeholder            string `yaml:"placeholder,omitempty"`
 	Reference              string
 	SelectorPropertyInputs []*SelectorPropertyInput `yaml:"selector_property_inputs,omitempty"`
+	PropertyInputs         []*PropertyInput         `yaml:"property_inputs,omitempty"`
 }
 
 type SelectorPropertyInput struct {

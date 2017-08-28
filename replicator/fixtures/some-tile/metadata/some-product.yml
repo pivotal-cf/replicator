@@ -8,6 +8,12 @@ form_types:
   - reference: .isolated_diego_cell.insecure_docker_registry_list
   - reference: .isolated_diego_cell.placement_tag
   - reference: .isolated_diego_cell.dns_servers
+  - label: Some Collection
+    reference: .isolated_ha_proxy.certs
+    property_inputs:
+    - reference: name
+    - reference: cert
+    - reference: key
 - description: It's another form
   label: Some Other Form
   name: some_other_form

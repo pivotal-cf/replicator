@@ -13,6 +13,15 @@ form_types:
     reference: .isolated_diego_cell_magenta_foo.placement_tag
   - label: ""
     reference: .isolated_diego_cell_magenta_foo.dns_servers
+  - label: Some Collection
+    reference: .isolated_ha_proxy_magenta_foo.certs
+    property_inputs:
+    - label: ""
+      reference: name
+    - label: ""
+      reference: cert
+    - label: ""
+      reference: key
 - description: It's another form
   label: Some Other Form
   name: some_other_form
