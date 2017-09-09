@@ -1,0 +1,60 @@
+name: p-windows-runtime-azure-sea
+releases: []
+stemcell_criteria: null
+description: ""
+form_types:
+- description: It's a form
+  label: Some Form
+  name: some_form
+  property_inputs:
+  - label: ""
+    reference: .windows_diego_cell_azure_sea.placement_tags
+- description: It's another form
+  label: Some Other Form
+  name: some_other_form
+  property_inputs:
+  - label: ""
+    reference: .windows_diego_cell_azure_sea.executor_memory_capacity
+  - label: ""
+    reference: .windows_diego_cell_azure_sea.executor_disk_capacity
+icon_image: ""
+install_time_verifiers: null
+job_types:
+- dynamic_ip: 0
+  instance_definition: null
+  label: ""
+  manifest: null
+  max_in_flight: null
+  name: windows_diego_cell_azure_sea
+  property_blueprints: []
+  resource_definitions: []
+  resource_label: ""
+  single_az_only: false
+  static_ip: 0
+  templates: []
+- dynamic_ip: 0
+  errand: true
+  instance_definition: null
+  label: ""
+  manifest: null
+  max_in_flight: null
+  name: an_errand
+  property_blueprints: []
+  resource_definitions: []
+  resource_label: ""
+  single_az_only: false
+  static_ip: 0
+  templates: []
+label: PCF Runtime For Windows (Azure Sea)
+metadata_version: ""
+minimum_version_for_upgrade: ""
+post_deploy_errands: []
+product_version: ""
+property_blueprints: []
+provides_product_versions: []
+rank: 0
+requires_product_versions: []
+serial: false
+variables:
+- name: /some/variable
+  type: certificate

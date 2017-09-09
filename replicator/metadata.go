@@ -19,6 +19,7 @@ type Metadata struct {
 	Rank                     int
 	RequiresProductVersions  []interface{} `yaml:"requires_product_versions"`
 	Serial                   bool
+	Variables                []interface{} `yaml:",omitempty"`
 }
 
 type FormType struct {
@@ -58,4 +59,5 @@ type JobType struct {
 	ResourceLabel       string        `yaml:"resource_label"`
 	SingleAzOnly        bool          `yaml:"single_az_only"`
 	Templates           []interface{}
+	Errand              bool `yaml:",omitempty"`
 }

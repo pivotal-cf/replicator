@@ -14,12 +14,14 @@ import (
 )
 
 var metadataRegexp = regexp.MustCompile(`metadata\/.*\.yml$`)
+var supportedTiles = []string{"p-isolation-segment", "p-windows-runtime"}
 
 const (
-	defaultIsoSegName     = "p-isolation-segment"
-	defaultRouterJobType  = "isolated_router"
-	defaultCellJobType    = "isolated_diego_cell"
-	defaultHAProxyJobType = "isolated_ha_proxy"
+	istRouterJobType  = "isolated_router"
+	istCellJobType    = "isolated_diego_cell"
+	istHAProxyJobType = "isolated_ha_proxy"
+
+	wrtCellJobType = "windows_diego_cell"
 )
 
 type TileReplicator struct{}
@@ -68,6 +70,8 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 				return err
 			}
 
+			tileName := metadata.Name
+
 			if err := t.replaceName(&metadata, config); err != nil {
 				return err
 			}
@@ -79,7 +83,12 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 				return err // not tested
 			}
 
-			finalContents := t.replaceProperties(string(contentsYaml), t.formatName(config))
+			var finalContents string
+			if tileName == "p-isolation-segment" {
+				finalContents = t.replaceISTProperties(string(contentsYaml), t.formatName(config))
+			} else if tileName == "p-windows-runtime" {
+				finalContents = t.replaceWRTProperties(string(contentsYaml), t.formatName(config))
+			}
 
 			_, err = dstFile.Write([]byte(finalContents))
 		} else {
@@ -101,26 +110,35 @@ func (TileReplicator) formatName(config ApplicationConfig) string {
 	return strings.ToLower(string(re.ReplaceAllLiteralString(config.Name, "_")))
 }
 
-func (TileReplicator) replaceProperties(metadata string, name string) string {
-	newDiegoCellName := fmt.Sprintf("%s_%s", defaultCellJobType, name)
-	newRouterName := fmt.Sprintf("%s_%s", defaultRouterJobType, name)
-	newHAProxyName := fmt.Sprintf("%s_%s", defaultHAProxyJobType, name)
+func (TileReplicator) replaceISTProperties(metadata string, name string) string {
+	newDiegoCellName := fmt.Sprintf("%s_%s", istCellJobType, name)
+	newRouterName := fmt.Sprintf("%s_%s", istRouterJobType, name)
+	newHAProxyName := fmt.Sprintf("%s_%s", istHAProxyJobType, name)
 
-	cellReplacedmetadata := strings.Replace(metadata, "isolated_diego_cell", newDiegoCellName, -1)
-	cellReplacedmetadata = strings.Replace(cellReplacedmetadata, "isolated_ha_proxy", newHAProxyName, -1)
-	return strings.Replace(cellReplacedmetadata, "isolated_router", newRouterName, -1)
+	cellReplacedMetadata := strings.Replace(metadata, "isolated_diego_cell", newDiegoCellName, -1)
+	cellReplacedMetadata = strings.Replace(cellReplacedMetadata, "isolated_ha_proxy", newHAProxyName, -1)
+	return strings.Replace(cellReplacedMetadata, "isolated_router", newRouterName, -1)
+}
+
+func (TileReplicator) replaceWRTProperties(metadata string, name string) string {
+	newDiegoCellName := fmt.Sprintf("%s_%s", wrtCellJobType, name)
+
+	return strings.Replace(metadata, "windows_diego_cell", newDiegoCellName, -1)
 }
 
 func (TileReplicator) replaceName(metadata *Metadata, config ApplicationConfig) error {
-	if metadata.Name != defaultIsoSegName {
-		return fmt.Errorf("the replicator does not replicate %s, supported tiles are [%s]",
-			metadata.Name, defaultIsoSegName)
-	}
 
 	re := regexp.MustCompile("[-_ ]")
-	metadata.Name = defaultIsoSegName + "-" + strings.ToLower(string(re.ReplaceAllLiteralString(config.Name, "-")))
+	for _, supportedTile := range supportedTiles {
+		if metadata.Name == supportedTile {
+			metadata.Name = metadata.Name + "-" + strings.ToLower(string(re.ReplaceAllLiteralString(config.Name, "-")))
+			return nil
+		}
+	}
 
-	return nil
+	return fmt.Errorf("the replicator does not replicate %s, supported tiles are %s",
+		metadata.Name, supportedTiles)
+
 }
 
 func (TileReplicator) replaceLabel(metadata *Metadata, config ApplicationConfig) {
