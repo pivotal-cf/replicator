@@ -16,24 +16,24 @@ var _ = Describe("tile replicator", func() {
 	var (
 		tileReplicator replicator.TileReplicator
 
-		pathToTile                string
-		pathToDuplicatedTile      string
-		pathToInvalidYamlMetadata string
-		pathToOutputTile          string
-		expectedMetadata          string
+		pathToTile                  string
+		pathToAlreadyDuplicatedTile string
+		pathToInvalidYamlMetadata   string
+		pathToOutputTile            string
+		expectedMetadata            string
 	)
 
 	Describe("Replicate", func() {
 		BeforeEach(func() {
-			pathToTile = filepath.Join("fixtures", "some-tile.pivotal")
-			pathToDuplicatedTile = filepath.Join("fixtures", "some-duplicated-tile.pivotal")
+			pathToTile = filepath.Join("fixtures", "ist.pivotal")
+			pathToAlreadyDuplicatedTile = filepath.Join("fixtures", "ist-duplicated.pivotal")
 			pathToInvalidYamlMetadata = filepath.Join("fixtures", "invalid-metadata.pivotal")
 
 			tempDir, err := ioutil.TempDir("", "")
 			Expect(err).NotTo(HaveOccurred())
-			pathToOutputTile = filepath.Join(tempDir, "some-other-tile.pivotal")
+			pathToOutputTile = filepath.Join(tempDir, "replicated-tile.pivotal")
 
-			expectedMetadataFile := filepath.Join("fixtures", "expected-metadata.yml")
+			expectedMetadataFile := filepath.Join("fixtures", "expected-ist-metadata.yml")
 
 			contents, err := ioutil.ReadFile(expectedMetadataFile)
 			Expect(err).NotTo(HaveOccurred())
@@ -116,7 +116,7 @@ var _ = Describe("tile replicator", func() {
 			Context("when the source tile is not p-isolation-segment", func() {
 				It("returns an error", func() {
 					err := tileReplicator.Replicate(replicator.ApplicationConfig{
-						Path:   pathToDuplicatedTile,
+						Path:   pathToAlreadyDuplicatedTile,
 						Output: pathToOutputTile,
 						Name:   "Magenta Foo",
 					})
