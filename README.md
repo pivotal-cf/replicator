@@ -6,7 +6,7 @@ A program the replicates tiles
 
 ## Usage
 
-An operator can use the `replicator` to create new copies of the Isolation Segment tile. To do so, you will need the following:
+An operator can use the `replicator` to create new copies of the Isolation Segment or Windows Runtime tiles. To do so, you will need the following:
 
 1. a [name](#naming) for the copy
 1. a copy of the original tile, downloaded from PivNet
