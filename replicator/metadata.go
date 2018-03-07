@@ -50,7 +50,7 @@ type JobType struct {
 	InstanceDefinition  interface{} `yaml:"instance_definition"`
 	Serial              bool        `yaml:",omitempty"`
 	Label               string
-	Manifest            interface{}
+	Manifest            interface{} `yaml:",omitempty"`
 	MaxInFlight         interface{} `yaml:"max_in_flight"`
 	StaticIP            int         `yaml:"static_ip"`
 	Name                string

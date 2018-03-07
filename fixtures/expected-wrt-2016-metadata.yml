@@ -1,4 +1,4 @@
-name: p-windows-runtime-azure-sea
+name: pas-windows-azure-sea
 releases: []
 stemcell_criteria:
   os: some-os
@@ -45,7 +45,7 @@ job_types:
   single_az_only: false
   static_ip: 0
   templates: []
-label: PCF Runtime For Windows (Azure Sea)
+label: Pivotal Application Service for Windows (Azure Sea)
 metadata_version: ""
 minimum_version_for_upgrade: "some-old-version"
 post_deploy_errands: []

@@ -14,7 +14,7 @@ import (
 )
 
 var metadataRegexp = regexp.MustCompile(`metadata\/.*\.yml$`)
-var supportedTiles = []string{"p-isolation-segment", "p-windows-runtime"}
+var supportedTiles = []string{"p-isolation-segment", "p-windows-runtime", "pas-windows"}
 
 const (
 	istRouterJobType  = "isolated_router"
@@ -87,6 +87,8 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 			if tileName == "p-isolation-segment" {
 				finalContents = t.replaceISTProperties(string(contentsYaml), t.formatName(config))
 			} else if tileName == "p-windows-runtime" {
+				finalContents = t.replaceWRTProperties(string(contentsYaml), t.formatName(config))
+			} else if tileName == "pas-windows" {
 				finalContents = t.replaceWRTProperties(string(contentsYaml), t.formatName(config))
 			}
 

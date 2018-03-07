@@ -62,7 +62,6 @@ job_types:
 - dynamic_ip: 0
   instance_definition: null
   label: ""
-  manifest: null
   max_in_flight: null
   static_ip: 0
   name: isolated_ha_proxy_magenta_foo
@@ -77,7 +76,6 @@ job_types:
 - dynamic_ip: 0
   instance_definition: null
   label: ""
-  manifest: null
   max_in_flight: null
   static_ip: 0
   name: isolated_router_magenta_foo
@@ -92,7 +90,6 @@ job_types:
 - dynamic_ip: 0
   instance_definition: null
   label: ""
-  manifest: null
   max_in_flight: null
   static_ip: 0
   name: isolated_diego_cell_magenta_foo
