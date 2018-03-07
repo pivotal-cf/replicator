@@ -53,7 +53,14 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 			return err // not tested
 		}
 
-		dstFile, err := dstTileZip.Create(srcFile.Name)
+		header := &zip.FileHeader{
+			Name:   srcFile.Name,
+			Method: zip.Deflate,
+		}
+		header.SetMode(srcFile.Mode())
+
+		dstFile, err := dstTileZip.CreateHeader(header)
+
 		if err != nil {
 			return err // not tested
 		}

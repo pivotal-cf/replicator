@@ -263,6 +263,34 @@ var _ = Describe("tile replicator", func() {
 
 				Expect(string(contents)).To(gomegamatchers.MatchYAML(expectedMetadata))
 			})
+
+			It("preserves the permissions of the files in the tile", func() {
+				err := tileReplicator.Replicate(replicator.ApplicationConfig{
+					Path:   pathToTile,
+					Output: pathToOutputTile,
+					Name:   "Azure Sea",
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				tileZipReader, err := zip.OpenReader(pathToTile)
+				Expect(err).NotTo(HaveOccurred())
+
+				defer tileZipReader.Close()
+
+				tilePermissions := map[string]string{}
+				for _, file := range tileZipReader.File {
+					tilePermissions[file.Name] = file.Mode().String()
+				}
+
+				outputTileReader, err := zip.OpenReader(pathToOutputTile)
+				Expect(err).NotTo(HaveOccurred())
+
+				defer outputTileReader.Close()
+
+				for _, file := range outputTileReader.File {
+					Expect(file.Mode().String()).To(Equal(tilePermissions[file.Name]))
+				}
+			})
 		})
 	})
 })
