@@ -31,6 +31,8 @@ func NewTileReplicator() TileReplicator {
 }
 
 func (t TileReplicator) Replicate(config ApplicationConfig) error {
+	fmt.Println("replicating", config.Path, "to", config.Output)
+
 	srcTileZip, err := zip.OpenReader(config.Path)
 	if err != nil {
 		return errors.New("could not open source zip file")
@@ -52,6 +54,8 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 		if err != nil {
 			return err // not tested
 		}
+
+		fmt.Println("adding:", srcFile.Name)
 
 		header := &zip.FileHeader{
 			Name:   srcFile.Name,
@@ -109,6 +113,8 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 			return err // not tested
 		}
 	}
+
+	fmt.Println("done")
 
 	return nil
 }

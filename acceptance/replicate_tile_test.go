@@ -1,6 +1,7 @@
 package acceptance
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,6 +10,36 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 )
+
+const IST_OUTPUT = `replicating %s to %s
+adding: metadata/
+adding: migrations/
+adding: migrations/v1/
+adding: releases/
+adding: releases/some-release.tgz
+adding: metadata/p-isolation-segment.yml
+done`
+
+const WRT_2012_OUTPUT = `replicating %s to %s
+adding: metadata/
+adding: metadata/p-windows-runtime.yml
+adding: migrations/
+adding: migrations/v1/
+adding: releases/
+adding: releases/some-release.tgz
+done`
+
+const WRT_2016_OUTPUT = `replicating %s to %s
+adding: embed/
+adding: embed/scripts/
+adding: embed/scripts/run
+adding: metadata/
+adding: metadata/p-windows-runtime.yml
+adding: migrations/
+adding: migrations/v1/
+adding: releases/
+adding: releases/some-release.tgz
+done`
 
 var _ = Describe("replicator", func() {
 	Context("when replicating the isolation segment tile", func() {
@@ -26,6 +57,8 @@ var _ = Describe("replicator", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(pathToOutputTile).To(BeAnExistingFile())
+
+			Expect(session.Out.Contents()).To(ContainSubstring(fmt.Sprintf(IST_OUTPUT, pathToTile, pathToOutputTile)))
 		})
 	})
 
@@ -44,6 +77,8 @@ var _ = Describe("replicator", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(pathToOutputTile).To(BeAnExistingFile())
+
+			Expect(session.Out.Contents()).To(ContainSubstring(fmt.Sprintf(WRT_2012_OUTPUT, pathToTile, pathToOutputTile)))
 		})
 	})
 
@@ -62,6 +97,8 @@ var _ = Describe("replicator", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(pathToOutputTile).To(BeAnExistingFile())
+
+			Expect(session.Out.Contents()).To(ContainSubstring(fmt.Sprintf(WRT_2016_OUTPUT, pathToTile, pathToOutputTile)))
 		})
 	})
 })
