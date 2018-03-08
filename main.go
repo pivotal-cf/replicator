@@ -8,8 +8,10 @@ import (
 )
 
 func main() {
+	logger := log.New(os.Stdout, "", 0)
+
 	argParser := replicator.NewArgParser()
-	tileReplicator := replicator.NewTileReplicator()
+	tileReplicator := replicator.NewTileReplicator(logger)
 
 	app := replicator.NewApplication(argParser, tileReplicator)
 	err := app.Run(os.Args[1:])

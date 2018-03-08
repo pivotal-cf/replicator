@@ -24,14 +24,23 @@ const (
 	wrtCellJobType = "windows_diego_cell"
 )
 
-type TileReplicator struct{}
+type TileReplicator struct {
+	logger logger
+}
 
-func NewTileReplicator() TileReplicator {
-	return TileReplicator{}
+//go:generate counterfeiter -o ./fakes/logger.go --fake-name Logger . logger
+type logger interface {
+	Printf(s string, v ...interface{})
+}
+
+func NewTileReplicator(logger logger) TileReplicator {
+	return TileReplicator{
+		logger: logger,
+	}
 }
 
 func (t TileReplicator) Replicate(config ApplicationConfig) error {
-	fmt.Println("replicating", config.Path, "to", config.Output)
+	t.logger.Printf("replicating %s to %s\n", config.Path, config.Output)
 
 	srcTileZip, err := zip.OpenReader(config.Path)
 	if err != nil {
@@ -55,7 +64,7 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 			return err // not tested
 		}
 
-		fmt.Println("adding:", srcFile.Name)
+		t.logger.Printf("adding: %s\n", srcFile.Name)
 
 		header := &zip.FileHeader{
 			Name:   srcFile.Name,
@@ -114,7 +123,7 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 		}
 	}
 
-	fmt.Println("done")
+	t.logger.Printf("done\n")
 
 	return nil
 }

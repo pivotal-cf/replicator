@@ -2,6 +2,7 @@ package replicator_test
 
 import (
 	"archive/zip"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
@@ -10,6 +11,7 @@ import (
 
 	"github.com/pivotal-cf-experimental/gomegamatchers"
 	"github.com/pivotal-cf/replicator/replicator"
+	"github.com/pivotal-cf/replicator/replicator/fakes"
 )
 
 var _ = Describe("tile replicator", func() {
@@ -21,6 +23,7 @@ var _ = Describe("tile replicator", func() {
 		pathToInvalidYamlMetadata   string
 		pathToOutputTile            string
 		expectedMetadata            string
+		logger                      *fakes.Logger
 	)
 
 	Describe("Replicate", func() {
@@ -40,7 +43,8 @@ var _ = Describe("tile replicator", func() {
 				Expect(err).NotTo(HaveOccurred())
 				expectedMetadata = string(contents)
 
-				tileReplicator = replicator.NewTileReplicator()
+				logger = &fakes.Logger{}
+				tileReplicator = replicator.NewTileReplicator(logger)
 			})
 
 			It("creates a duplicate tile with modified metadata", func() {
@@ -72,6 +76,25 @@ var _ = Describe("tile replicator", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(string(contents)).To(gomegamatchers.MatchYAML(expectedMetadata))
+			})
+
+			It("logs what it is doing", func() {
+				err := tileReplicator.Replicate(replicator.ApplicationConfig{
+					Path:   pathToTile,
+					Output: pathToOutputTile,
+					Name:   "Magenta Foo",
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(logger.PrintfCallCount()).To(Equal(8))
+				Expect(formatLogLine(logger.PrintfArgsForCall(0))).To(Equal(fmt.Sprintf("replicating %s to %s\n", pathToTile, pathToOutputTile)))
+				Expect(formatLogLine(logger.PrintfArgsForCall(1))).To(Equal("adding: metadata/\n"))
+				Expect(formatLogLine(logger.PrintfArgsForCall(2))).To(Equal("adding: migrations/\n"))
+				Expect(formatLogLine(logger.PrintfArgsForCall(3))).To(Equal("adding: migrations/v1/\n"))
+				Expect(formatLogLine(logger.PrintfArgsForCall(4))).To(Equal("adding: releases/\n"))
+				Expect(formatLogLine(logger.PrintfArgsForCall(5))).To(Equal("adding: releases/some-release.tgz\n"))
+				Expect(formatLogLine(logger.PrintfArgsForCall(6))).To(Equal("adding: metadata/p-isolation-segment.yml\n"))
+				Expect(formatLogLine(logger.PrintfArgsForCall(7))).To(Equal("done\n"))
 			})
 
 			Context("when a property does not exist in the tile metadata", func() {
@@ -181,7 +204,8 @@ var _ = Describe("tile replicator", func() {
 				Expect(err).NotTo(HaveOccurred())
 				expectedMetadata = string(contents)
 
-				tileReplicator = replicator.NewTileReplicator()
+				logger = &fakes.Logger{}
+				tileReplicator = replicator.NewTileReplicator(logger)
 			})
 
 			It("creates a duplicate tile with modified metadata", func() {
@@ -230,7 +254,8 @@ var _ = Describe("tile replicator", func() {
 				Expect(err).NotTo(HaveOccurred())
 				expectedMetadata = string(contents)
 
-				tileReplicator = replicator.NewTileReplicator()
+				logger = &fakes.Logger{}
+				tileReplicator = replicator.NewTileReplicator(logger)
 			})
 
 			It("creates a duplicate tile with modified metadata", func() {
