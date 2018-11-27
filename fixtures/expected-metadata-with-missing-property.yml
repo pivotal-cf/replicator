@@ -1,40 +1,5 @@
 name: p-isolation-segment-magenta-foo
-releases: []
-stemcell_criteria: null
-description: ""
-form_types: []
-icon_image: ""
-install_time_verifiers: null
 job_types:
-- dynamic_ip: 0
-  instance_definition: null
-  label: ""
-  max_in_flight: null
-  static_ip: 0
-  name: isolated_router_magenta_foo
-  property_blueprints: []
-  resource_definitions: []
-  resource_label: ""
-  single_az_only: false
-  templates: []
-- dynamic_ip: 0
-  instance_definition: null
-  label: ""
-  max_in_flight: null
-  static_ip: 0
-  name: isolated_diego_cell_magenta_foo
-  property_blueprints: []
-  resource_definitions: []
-  resource_label: ""
-  single_az_only: false
-  templates: []
+- name: isolated_router_magenta_foo
+- name: isolated_diego_cell_magenta_foo
 label: PCF Isolation Segment (Magenta Foo)
-metadata_version: ""
-minimum_version_for_upgrade: ""
-post_deploy_errands: []
-product_version: ""
-property_blueprints: []
-provides_product_versions: []
-rank: 0
-requires_product_versions: []
-serial: false

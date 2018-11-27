@@ -14,10 +14,10 @@ import (
 const IST_OUTPUT = `replicating %s to %s
 adding: metadata/
 adding: migrations/
-adding: migrations/v1/
 adding: releases/
-adding: releases/some-release.tgz
 adding: metadata/p-isolation-segment.yml
+adding: migrations/v1/
+adding: releases/some-release.tgz
 done`
 
 const WRT_2012_OUTPUT = `replicating %s to %s

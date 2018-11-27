@@ -1,5 +1,4 @@
 name: p-windows-runtime-azure-sea
-releases: []
 stemcell_criteria:
   os: some-os
   version: some-stemcell-version
@@ -20,40 +19,25 @@ form_types:
   - label: "Executor Disk Capacity"
     reference: .windows_diego_cell_azure_sea.executor_disk_capacity
 icon_image: "icon"
-install_time_verifiers: null
 job_types:
 - dynamic_ip: 0
-  instance_definition: null
   label: "Windows Diego Cell"
-  max_in_flight: null
   name: windows_diego_cell_azure_sea
-  property_blueprints: []
-  resource_definitions: []
   resource_label: "Windows Diego Cell Resource"
   single_az_only: false
   static_ip: 0
-  templates: []
 - dynamic_ip: 0
   errand: true
-  instance_definition: null
   label: "Windows Errand"
-  max_in_flight: null
   name: an_errand
-  property_blueprints: []
-  resource_definitions: []
   resource_label: "Windows Errand Resource"
   single_az_only: false
   static_ip: 0
-  templates: []
 label: PCF Runtime For Windows (Azure Sea)
 metadata_version: ""
 minimum_version_for_upgrade: "some-old-version"
-post_deploy_errands: []
 product_version: "some-version"
-property_blueprints: []
-provides_product_versions: []
 rank: 0
-requires_product_versions: []
 serial: false
 variables:
 - name: /some/variable

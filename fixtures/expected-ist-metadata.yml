@@ -1,114 +1,53 @@
 name: p-isolation-segment-magenta-foo
-releases: []
-stemcell_criteria: null
-description: ""
 form_types:
 - description: It's a form
   label: Some Form
   name: some_form
+  markdown: some markdown content
   property_inputs:
-  - label: ""
-    reference: .isolated_diego_cell_magenta_foo.insecure_docker_registry_list
-  - label: ""
-    reference: .isolated_diego_cell_magenta_foo.placement_tag
-  - label: ""
-    reference: .isolated_diego_cell_magenta_foo.dns_servers
+  - reference: .isolated_diego_cell_magenta_foo.insecure_docker_registry_list
+  - reference: .isolated_diego_cell_magenta_foo.placement_tag
+  - reference: .isolated_diego_cell_magenta_foo.dns_servers
   - label: Some Collection
     reference: .isolated_ha_proxy_magenta_foo.certs
     property_inputs:
-    - label: ""
-      reference: name
-    - label: ""
-      reference: cert
-    - label: ""
-      reference: key
+    - reference: name
+    - reference: cert
+    - reference: key
 - description: It's another form
   label: Some Other Form
   name: some_other_form
   property_inputs:
-  - label: ""
-    reference: .isolated_ha_proxy_magenta_foo.trusted_domain_cidrs
-  - label: ""
-    reference: .isolated_router_magenta_foo.static_ips
-  - label: ""
-    reference: .isolated_diego_cell_magenta_foo.garden_network_pool
-  - label: ""
-    reference: .isolated_diego_cell_magenta_foo.garden_network_mtu
+  - reference: .isolated_ha_proxy_magenta_foo.trusted_domain_cidrs
+  - reference: .isolated_router_magenta_foo.static_ips
+  - reference: .isolated_diego_cell_magenta_foo.garden_network_pool
+  - reference: .isolated_diego_cell_magenta_foo.garden_network_mtu
   - label: Some Selector
     reference: .properties.some_selector
     selector_property_inputs:
     - label: It's a selector
       reference: .properties.some_selector.some_choice
       property_inputs:
-      - label: ""
-        reference: .properties.some_selector.some_choice.some_property
-      - label: ""
-        reference: .properties.some_selector.some_choice.some_other_property
-    - label: ""
-      reference: .properties.some_selector.some_other_choice
-    - label: ""
-      reference: .properties.some_selector.more_choice
-  - label: ""
-    reference: .isolated_diego_cell_magenta_foo.executor_memory_capacity
-  - label: ""
-    reference: .isolated_diego_cell_magenta_foo.executor_disk_capacity
-  - label: ""
-    reference: .isolated_diego_cell_magenta_foo.silk_daemon_client_cert
-  - label: ""
-    reference: .isolated_diego_cell_magenta_foo.network_policy_agent_cert
-icon_image: ""
-install_time_verifiers: null
+      - reference: .properties.some_selector.some_choice.some_property
+      - reference: .properties.some_selector.some_choice.some_other_property
+    - reference: .properties.some_selector.some_other_choice
+    - reference: .properties.some_selector.more_choice
+  - reference: .isolated_diego_cell_magenta_foo.executor_memory_capacity
+  - reference: .isolated_diego_cell_magenta_foo.executor_disk_capacity
+  - reference: .isolated_diego_cell_magenta_foo.silk_daemon_client_cert
+  - reference: .isolated_diego_cell_magenta_foo.network_policy_agent_cert
 job_types:
-- dynamic_ip: 0
-  instance_definition: null
-  label: ""
-  max_in_flight: null
-  static_ip: 0
-  name: isolated_ha_proxy_magenta_foo
-  property_blueprints: []
-  resource_definitions: []
-  resource_label: ""
-  single_az_only: false
-  templates: []
+- name: isolated_ha_proxy_magenta_foo
   manifest: |
     ha_proxy:
       trusted_domain_cidrs: (( .isolated_ha_proxy_magenta_foo.trusted_domain_cidrs.value ))
-- dynamic_ip: 0
-  instance_definition: null
-  label: ""
-  max_in_flight: null
-  static_ip: 0
-  name: isolated_router_magenta_foo
-  property_blueprints: []
-  resource_definitions: []
-  resource_label: ""
-  single_az_only: false
-  templates: []
+- name: isolated_router_magenta_foo
   manifest: |
     router:
       isolation_segments: ['(( enable_isolated_routing.value ? .isolated_diego_cell_magenta_foo.placement_tag.value : empty_list.value))']
-- dynamic_ip: 0
-  instance_definition: null
-  label: ""
-  max_in_flight: null
-  static_ip: 0
-  name: isolated_diego_cell_magenta_foo
-  property_blueprints: []
-  resource_definitions: []
-  resource_label: ""
-  single_az_only: false
-  templates: []
+- name: isolated_diego_cell_magenta_foo
   manifest: |
     diego:
       rep:
         placement_tags: [ (( placement_tag.value )) ]
 label: PCF Isolation Segment (Magenta Foo)
-metadata_version: ""
-minimum_version_for_upgrade: ""
-post_deploy_errands: []
-product_version: ""
-property_blueprints: []
-provides_product_versions: []
-rank: 0
-requires_product_versions: []
-serial: false

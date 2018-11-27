@@ -2,7 +2,6 @@ package replicator_test
 
 import (
 	"archive/zip"
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
@@ -21,6 +20,8 @@ var _ = Describe("tile replicator", func() {
 		pathToTile                  string
 		pathToAlreadyDuplicatedTile string
 		pathToInvalidYamlMetadata   string
+		pathToInvalidNoNameTile     string
+		pathToInvalidNoLabelTile    string
 		pathToOutputTile            string
 		expectedMetadata            string
 		logger                      *fakes.Logger
@@ -32,6 +33,8 @@ var _ = Describe("tile replicator", func() {
 				pathToTile = filepath.Join("..", "fixtures", "ist.pivotal")
 				pathToAlreadyDuplicatedTile = filepath.Join("..", "fixtures", "ist-duplicated.pivotal")
 				pathToInvalidYamlMetadata = filepath.Join("..", "fixtures", "invalid-metadata.pivotal")
+				pathToInvalidNoNameTile = filepath.Join("..", "fixtures", "invalid-no-name.pivotal")
+				pathToInvalidNoLabelTile = filepath.Join("..", "fixtures", "invalid-no-label.pivotal")
 
 				tempDir, err := ioutil.TempDir("", "")
 				Expect(err).NotTo(HaveOccurred())
@@ -76,25 +79,6 @@ var _ = Describe("tile replicator", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(string(contents)).To(gomegamatchers.MatchYAML(expectedMetadata))
-			})
-
-			It("logs what it is doing", func() {
-				err := tileReplicator.Replicate(replicator.ApplicationConfig{
-					Path:   pathToTile,
-					Output: pathToOutputTile,
-					Name:   "Magenta Foo",
-				})
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(logger.PrintfCallCount()).To(Equal(8))
-				Expect(formatLogLine(logger.PrintfArgsForCall(0))).To(Equal(fmt.Sprintf("replicating %s to %s\n", pathToTile, pathToOutputTile)))
-				Expect(formatLogLine(logger.PrintfArgsForCall(1))).To(Equal("adding: metadata/\n"))
-				Expect(formatLogLine(logger.PrintfArgsForCall(2))).To(Equal("adding: migrations/\n"))
-				Expect(formatLogLine(logger.PrintfArgsForCall(3))).To(Equal("adding: migrations/v1/\n"))
-				Expect(formatLogLine(logger.PrintfArgsForCall(4))).To(Equal("adding: releases/\n"))
-				Expect(formatLogLine(logger.PrintfArgsForCall(5))).To(Equal("adding: releases/some-release.tgz\n"))
-				Expect(formatLogLine(logger.PrintfArgsForCall(6))).To(Equal("adding: metadata/p-isolation-segment.yml\n"))
-				Expect(formatLogLine(logger.PrintfArgsForCall(7))).To(Equal("done\n"))
 			})
 
 			Context("when a property does not exist in the tile metadata", func() {
@@ -161,6 +145,32 @@ var _ = Describe("tile replicator", func() {
 
 						Expect(err).To(HaveOccurred())
 						Expect(err.Error()).To(ContainSubstring("cannot unmarshal"))
+					})
+				})
+
+				Context("when the tile does not contain a 'name'", func() {
+					It("returns an error", func() {
+						err := tileReplicator.Replicate(replicator.ApplicationConfig{
+							Path:   pathToInvalidNoNameTile,
+							Output: pathToOutputTile,
+							Name:   "Magenta Foo",
+						})
+
+						Expect(err).To(HaveOccurred())
+						Expect(err.Error()).To(ContainSubstring("missing required tile property 'name'"))
+					})
+				})
+
+				Context("when the tile does not contain a 'label'", func() {
+					It("returns an error", func() {
+						err := tileReplicator.Replicate(replicator.ApplicationConfig{
+							Path:   pathToInvalidNoLabelTile,
+							Output: pathToOutputTile,
+							Name:   "Magenta Foo",
+						})
+
+						Expect(err).To(HaveOccurred())
+						Expect(err.Error()).To(ContainSubstring("missing required tile property 'label'"))
 					})
 				})
 

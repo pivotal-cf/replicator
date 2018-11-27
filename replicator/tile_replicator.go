@@ -84,19 +84,26 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 				return err // not tested
 			}
 
-			var metadata Metadata
+			var metadata map[string]interface{}
 
 			if err := yaml.Unmarshal([]byte(contents), &metadata); err != nil {
 				return err
 			}
 
-			tileName := metadata.Name
-
-			if err := t.replaceName(&metadata, config); err != nil {
+			tileName, ok := metadata["name"]
+			if !ok {
+				return errors.New("Tile metadata file is missing required tile property 'name'")
+			}
+			metadata["name"], err = t.replaceName(fmt.Sprintf("%v", tileName), config)
+			if err != nil {
 				return err
 			}
 
-			t.replaceLabel(&metadata, config)
+			tileLabel, ok := metadata["label"]
+			if !ok {
+				return errors.New("Tile metadata file is missing required tile property 'label'")
+			}
+			metadata["label"] = t.replaceLabel(fmt.Sprintf("%v", tileLabel), config)
 
 			contentsYaml, err := yaml.Marshal(metadata)
 			if err != nil {
@@ -150,21 +157,20 @@ func (TileReplicator) replaceWRTProperties(metadata string, name string) string 
 	return strings.Replace(metadata, "windows_diego_cell", newDiegoCellName, -1)
 }
 
-func (TileReplicator) replaceName(metadata *Metadata, config ApplicationConfig) error {
+func (TileReplicator) replaceName(originalName string, config ApplicationConfig) (string, error) {
 
 	re := regexp.MustCompile("[-_ ]")
 	for _, supportedTile := range supportedTiles {
-		if metadata.Name == supportedTile {
-			metadata.Name = metadata.Name + "-" + strings.ToLower(string(re.ReplaceAllLiteralString(config.Name, "-")))
-			return nil
+		if originalName == supportedTile {
+			return originalName + "-" + strings.ToLower(string(re.ReplaceAllLiteralString(config.Name, "-"))), nil
 		}
 	}
 
-	return fmt.Errorf("the replicator does not replicate %s, supported tiles are %s",
-		metadata.Name, supportedTiles)
+	return "", fmt.Errorf("the replicator does not replicate %s, supported tiles are %s",
+		originalName, supportedTiles)
 
 }
 
-func (TileReplicator) replaceLabel(metadata *Metadata, config ApplicationConfig) {
-	metadata.Label = fmt.Sprintf("%s (%s)", metadata.Label, config.Name)
+func (TileReplicator) replaceLabel(originalLabel string, config ApplicationConfig) string {
+	return fmt.Sprintf("%s (%s)", originalLabel, config.Name)
 }
