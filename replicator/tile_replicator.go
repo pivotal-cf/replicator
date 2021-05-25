@@ -14,18 +14,15 @@ import (
 )
 
 var metadataRegexp = regexp.MustCompile(`metadata\/.*\.yml$`)
-var supportedTiles = []string{"p-isolation-segment", "p-windows-runtime", "pas-windows"}
-
-const (
-	istRouterJobType  = "isolated_router"
-	istCellJobType    = "isolated_diego_cell"
-	istHAProxyJobType = "isolated_ha_proxy"
-
-	wrtCellJobType = "windows_diego_cell"
-)
 
 type TileReplicator struct {
 	logger logger
+}
+
+type Metadata map[string]interface{}
+
+type JobType struct {
+	Name string
 }
 
 //go:generate counterfeiter -o ./fakes/logger.go --fake-name Logger . logger
@@ -84,7 +81,7 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 				return err // not tested
 			}
 
-			var metadata map[string]interface{}
+			var metadata Metadata
 
 			if err := yaml.Unmarshal([]byte(contents), &metadata); err != nil {
 				return err
@@ -92,7 +89,7 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 
 			tileName, ok := metadata["name"]
 			if !ok {
-				return errors.New("Tile metadata file is missing required tile property 'name'")
+				return errors.New("tile metadata file is missing required tile property 'name'")
 			}
 			metadata["name"], err = t.replaceName(fmt.Sprintf("%v", tileName), config)
 			if err != nil {
@@ -101,27 +98,40 @@ func (t TileReplicator) Replicate(config ApplicationConfig) error {
 
 			tileLabel, ok := metadata["label"]
 			if !ok {
-				return errors.New("Tile metadata file is missing required tile property 'label'")
+				return errors.New("tile metadata file is missing required tile property 'label'")
 			}
 			metadata["label"] = t.replaceLabel(fmt.Sprintf("%v", tileLabel), config)
+
+			jobTypesYaml, err := yaml.Marshal(metadata["job_types"])
+			if err != nil {
+				return err // not tested
+			}
+
+			jobTypes, err := t.findJobTypes(jobTypesYaml)
+			if err != nil {
+				return err // not tested
+			}
 
 			contentsYaml, err := yaml.Marshal(metadata)
 			if err != nil {
 				return err // not tested
 			}
 
-			var finalContents string
-			if tileName == "p-isolation-segment" {
-				finalContents = t.replaceISTProperties(string(contentsYaml), t.formatName(config))
-			} else if tileName == "p-windows-runtime" {
-				finalContents = t.replaceWRTProperties(string(contentsYaml), t.formatName(config))
-			} else if tileName == "pas-windows" {
-				finalContents = t.replaceWRTProperties(string(contentsYaml), t.formatName(config))
+			finalContents := string(contentsYaml)
+
+			for _, v := range jobTypes {
+				finalContents = t.replaceProperty(finalContents, v.Name, t.formatName(config))
 			}
 
 			_, err = dstFile.Write([]byte(finalContents))
+			if err != nil {
+				return err // not tested
+			}
 		} else {
 			_, err = io.Copy(dstFile, srcFileReader)
+			if err != nil {
+				return err // not tested
+			}
 		}
 
 		err = srcFileReader.Close()
@@ -141,34 +151,26 @@ func (TileReplicator) formatName(config ApplicationConfig) string {
 	return strings.ToLower(string(re.ReplaceAllLiteralString(config.Name, "_")))
 }
 
-func (TileReplicator) replaceISTProperties(metadata string, name string) string {
-	newDiegoCellName := fmt.Sprintf("%s_%s", istCellJobType, name)
-	newRouterName := fmt.Sprintf("%s_%s", istRouterJobType, name)
-	newHAProxyName := fmt.Sprintf("%s_%s", istHAProxyJobType, name)
+func (TileReplicator) findJobTypes(j []byte) ([]JobType, error) {
+	var job_types []JobType
 
-	cellReplacedMetadata := strings.Replace(metadata, "isolated_diego_cell", newDiegoCellName, -1)
-	cellReplacedMetadata = strings.Replace(cellReplacedMetadata, "isolated_ha_proxy", newHAProxyName, -1)
-	return strings.Replace(cellReplacedMetadata, "isolated_router", newRouterName, -1)
+	if err := yaml.Unmarshal(j, &job_types); err != nil {
+		return nil, err
+	}
+
+	return job_types, nil
 }
 
-func (TileReplicator) replaceWRTProperties(metadata string, name string) string {
-	newDiegoCellName := fmt.Sprintf("%s_%s", wrtCellJobType, name)
+func (t TileReplicator) replaceProperty(metadata string, name string, suffix string) string {
+	newPropertyName := fmt.Sprintf("%s_%s", name, suffix)
+	t.logger.Printf("updating job: %s => %s", name, newPropertyName)
 
-	return strings.Replace(metadata, "windows_diego_cell", newDiegoCellName, -1)
+	return strings.Replace(metadata, name, newPropertyName, -1)
 }
 
 func (TileReplicator) replaceName(originalName string, config ApplicationConfig) (string, error) {
-
 	re := regexp.MustCompile("[-_ ]")
-	for _, supportedTile := range supportedTiles {
-		if originalName == supportedTile {
-			return originalName + "-" + strings.ToLower(string(re.ReplaceAllLiteralString(config.Name, "-"))), nil
-		}
-	}
-
-	return "", fmt.Errorf("the replicator does not replicate %s, supported tiles are %s",
-		originalName, supportedTiles)
-
+	return originalName + "-" + strings.ToLower(string(re.ReplaceAllLiteralString(config.Name, "-"))), nil
 }
 
 func (TileReplicator) replaceLabel(originalLabel string, config ApplicationConfig) string {

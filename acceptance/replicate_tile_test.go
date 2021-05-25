@@ -16,6 +16,9 @@ adding: metadata/
 adding: migrations/
 adding: releases/
 adding: metadata/p-isolation-segment.yml
+updating job: isolated_ha_proxy => isolated_ha_proxy_blue
+updating job: isolated_router => isolated_router_blue
+updating job: isolated_diego_cell => isolated_diego_cell_blue
 adding: migrations/v1/
 adding: releases/some-release.tgz
 done`
@@ -23,6 +26,8 @@ done`
 const WRT_2012_OUTPUT = `replicating %s to %s
 adding: metadata/
 adding: metadata/p-windows-runtime.yml
+updating job: windows_diego_cell => windows_diego_cell_indigo
+updating job: an_errand => an_errand_indigo
 adding: migrations/
 adding: migrations/v1/
 adding: releases/
@@ -35,6 +40,8 @@ adding: embed/scripts/
 adding: embed/scripts/run
 adding: metadata/
 adding: metadata/p-windows-runtime.yml
+updating job: windows_diego_cell => windows_diego_cell_aquamarine
+updating job: an_errand => an_errand_aquamarine
 adding: migrations/
 adding: migrations/v1/
 adding: releases/
