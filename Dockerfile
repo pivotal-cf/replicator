@@ -1,3 +1,3 @@
 FROM scratch
-ENTRYPOINT ["/winfs-injector"]
-COPY winfs-injector /
+ENTRYPOINT ["/replicator"]
+COPY replicator /
