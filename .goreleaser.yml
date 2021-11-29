@@ -21,10 +21,10 @@ builds:
 archives:
   - id: github
     format: binary
-    name_template: "replicator-{{ .Os }}-{{ .Version }}"
+    name_template: "replicator-{{ .Os }}"
   - id: homebrew
     format: "tar.gz"
-    name_template: "replicator-{{ .Os }}-{{ .Version }}"
+    name_template: "replicator-{{ .Os }}"
     format_overrides:
       - goos: windows
         format: zip
