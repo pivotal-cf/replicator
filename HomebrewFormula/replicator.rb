@@ -5,23 +5,31 @@
 class Replicator < Formula
   desc ""
   homepage ""
-  version "0.12.0"
+  version "0.13.0"
 
   on_macos do
-    if Hardware::CPU.intel?
-      url "https://github.com/pivotal-cf/replicator/releases/download/0.12.0/replicator-darwin.tar.gz"
-      sha256 "4eda65e0cc8952bedd9902e21b5618b12eaeeaf49a6b109c6dacadd3e6d4e9e4"
+    url "https://github.com/pivotal-cf/replicator/releases/download/0.13.0/replicator-darwin.tar.gz"
+    sha256 "e55656f6048966ad6572d582ed7c3e127851409ae02732ec1b6aba76291b754e"
 
-      def install
-        bin.install "replicator"
+    def install
+      bin.install "replicator"
+    end
+
+    if Hardware::CPU.arm?
+      def caveats
+        <<~EOS
+          The darwin_arm64 architecture is not supported for the Replicator
+          formula at this time. The darwin_amd64 binary may work in compatibility
+          mode, but it might not be fully supported.
+        EOS
       end
     end
   end
 
   on_linux do
     if Hardware::CPU.intel?
-      url "https://github.com/pivotal-cf/replicator/releases/download/0.12.0/replicator-linux.tar.gz"
-      sha256 "2857e09c36781ce8e4e940f8e791e631dbbf7bee41661905f48c9bb3a069f3ac"
+      url "https://github.com/pivotal-cf/replicator/releases/download/0.13.0/replicator-linux.tar.gz"
+      sha256 "75e11b1e94e68f77e0ae340b72b33fb0df8db45fe8625a6ef52b5459439da48f"
 
       def install
         bin.install "replicator"
