@@ -43,6 +43,8 @@ dockers:
   - image_templates:
       - "pivotalcfreleng/replicator:latest"
       - "pivotalcfreleng/replicator:{{ .Tag }}"
+      - "gcr.io/tas-ppe/pivotalcfreleng/replicator:latest"
+      - "gcr.io/tas-ppe/pivotalcfreleng/replicator:{{ .Tag }}"
 
     skip_push: "false"
 
