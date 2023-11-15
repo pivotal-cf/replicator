@@ -9,7 +9,7 @@ class Replicator < Formula
 
   on_macos do
     url "https://github.com/pivotal-cf/replicator/releases/download/0.14.0/replicator-darwin.tar.gz"
-    sha256 "254905bac05bf1ce166a8736a10702d1f5947b3c3af1e0b4e8ac92ac655fab71"
+    sha256 "a29dcc59f339d3989e46d8b63d0d7f3832569770a40ca235d718a1d422f0bfaf"
 
     def install
       bin.install "replicator"
@@ -29,7 +29,7 @@ class Replicator < Formula
   on_linux do
     if Hardware::CPU.intel?
       url "https://github.com/pivotal-cf/replicator/releases/download/0.14.0/replicator-linux.tar.gz"
-      sha256 "a3dda7d940f955a061c28b830e84e53fcf23bac4b2c6589cfd55cd9179096c16"
+      sha256 "4f8ec1f2e5ba6ec79f61501b7cf0d107ca1c1aa9f833e245b48f672664d2582a"
 
       def install
         bin.install "replicator"
