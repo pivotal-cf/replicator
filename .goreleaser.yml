@@ -1,11 +1,15 @@
 # For documentation at http://goreleaser.com
+version: 2
+
 before:
   hooks:
-    - go mod download
+  - go mod download
+
 release:
   github:
     owner: pivotal-cf
     name: replicator
+
 builds:
 - env:
   - CGO_ENABLED=0
@@ -18,45 +22,49 @@ builds:
   ldflags:
   - -X "main.version={{.Version}}"
   main: ./
+
 archives:
-  - id: github
-    format: binary
-    name_template: "replicator-{{ .Os }}"
-  - id: homebrew
-    format: "tar.gz"
-    name_template: "replicator-{{ .Os }}"
-    format_overrides:
-      - goos: windows
-        format: zip
+- id: github
+  format: binary
+  name_template: "replicator-{{ .Os }}"
+
+- id: homebrew
+  format: "tar.gz"
+  name_template: "replicator-{{ .Os }}"
+  format_overrides:
+  - goos: windows
+    format: zip
+
 brews:
-  - name: replicator
-    tap:
-      owner: pivotal-cf
-      name: replicator
-      token: "{{ .Env.GITHUB_TOKEN }}"
-    folder: HomebrewFormula
-    ids:
-      - homebrew
-    test: |
-      system "#{bin}/replicator --version"
+- name: replicator
+  repository:
+    owner: pivotal-cf
+    name: replicator
+    token: "{{ .Env.GITHUB_TOKEN }}"
+  directory: HomebrewFormula
+  ids:
+  - homebrew
+  test: |
+    system "#{bin}/replicator --version"
+
 dockers:
-  - image_templates:
-      - "pivotalcfreleng/replicator:latest"
-      - "pivotalcfreleng/replicator:{{ .Tag }}"
-      - "gcr.io/tas-ppe/pivotalcfreleng/replicator:latest"
-      - "gcr.io/tas-ppe/pivotalcfreleng/replicator:{{ .Tag }}"
-
-    skip_push: "false"
-
-    build_flag_templates:
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
+- image_templates:
+  - "pivotalcfreleng/replicator:latest"
+  - "pivotalcfreleng/replicator:{{ .Tag }}"
+  - "gcr.io/tas-ppe/pivotalcfreleng/replicator:latest"
+  - "gcr.io/tas-ppe/pivotalcfreleng/replicator:{{ .Tag }}"
+  skip_push: "false"
+  build_flag_templates:
+  - "--label=org.opencontainers.image.created={{.Date}}"
+  - "--label=org.opencontainers.image.title={{.ProjectName}}"
+  - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+  - "--label=org.opencontainers.image.version={{.Version}}"
 
 checksum:
   name_template: 'checksums.txt'
+
 snapshot:
   name_template: "{{ .Tag }}-next"
+
 changelog:
-  skip: true
+  disable: true
