@@ -5,12 +5,12 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	"github.com/pivotal-cf-experimental/gomegamatchers"
 	"github.com/pivotal-cf/replicator/replicator"
 	"github.com/pivotal-cf/replicator/replicator/fakes"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("tile replicator", func() {
