@@ -25,15 +25,18 @@ builds:
 
 archives:
 - id: github
-  format: binary
+  formats:
+  - "binary"
   name_template: "replicator-{{ .Os }}"
 
 - id: homebrew
-  format: "tar.gz"
+  formats:
+  - "tar.gz"
   name_template: "replicator-{{ .Os }}"
   format_overrides:
   - goos: windows
-    format: zip
+    formats:
+    - "zip"
 
 brews:
 - name: replicator
@@ -62,7 +65,7 @@ checksum:
   name_template: 'checksums.txt'
 
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Tag }}-next"
 
 changelog:
   disable: true
