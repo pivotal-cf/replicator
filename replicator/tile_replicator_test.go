@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/pivotal-cf-experimental/gomegamatchers"
 	"github.com/pivotal-cf/replicator/replicator"
 	"github.com/pivotal-cf/replicator/replicator/fakes"
 
@@ -78,7 +77,7 @@ var _ = Describe("tile replicator", func() {
 				contents, err := ioutil.ReadAll(f)
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(string(contents)).To(gomegamatchers.HelpfullyMatchYAML(expectedMetadata))
+				Expect(string(contents)).To(MatchYAML(expectedMetadata))
 			})
 
 			Context("when a property does not exist in the tile metadata", func() {
@@ -116,7 +115,7 @@ var _ = Describe("tile replicator", func() {
 					contents, err = ioutil.ReadAll(f)
 					Expect(err).NotTo(HaveOccurred())
 
-					Expect(string(contents)).To(gomegamatchers.HelpfullyMatchYAML(expectedMetadata))
+					Expect(string(contents)).To(MatchYAML(expectedMetadata))
 				})
 			})
 
@@ -246,7 +245,7 @@ var _ = Describe("tile replicator", func() {
 				contents, err := ioutil.ReadAll(f)
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(string(contents)).To(gomegamatchers.HelpfullyMatchYAML(expectedMetadata))
+				Expect(string(contents)).To(MatchYAML(expectedMetadata))
 			})
 		})
 
@@ -296,7 +295,7 @@ var _ = Describe("tile replicator", func() {
 				contents, err := ioutil.ReadAll(f)
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(string(contents)).To(gomegamatchers.HelpfullyMatchYAML(expectedMetadata))
+				Expect(string(contents)).To(MatchYAML(expectedMetadata))
 			})
 
 			It("preserves the permissions of the files in the tile", func() {
