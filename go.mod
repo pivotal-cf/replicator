@@ -2,7 +2,7 @@ module github.com/pivotal-cf/replicator
 
 go 1.24
 
-toolchain go1.24.4
+toolchain go1.24.8
 
 require (
 	github.com/onsi/ginkgo/v2 v2.26.0
