@@ -33,7 +33,7 @@ jobs:
         run: go test --covermode=atomic --coverprofile=replicator-${{ github.sha }}-unit-test-code-coverage.out -v ./...
 
       - name: Archive Unit Test Code Coverage Output
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Unit Test Code Coverage Output
           path: replicator-${{ github.sha }}-unit-test-code-coverage.out
