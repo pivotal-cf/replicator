@@ -5,7 +5,7 @@ go 1.25
 toolchain go1.25.8
 
 require (
-	github.com/onsi/ginkgo/v2 v2.28.1
+	github.com/onsi/ginkgo/v2 v2.28.2
 	github.com/onsi/gomega v1.39.1
 	go.yaml.in/yaml/v3 v3.0.4
 )
