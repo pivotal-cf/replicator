@@ -5,11 +5,11 @@
 class Replicator < Formula
   desc ""
   homepage ""
-  version "0.20.0"
+  version "0.21.0"
 
   on_macos do
-    url "https://github.com/pivotal-cf/replicator/releases/download/0.20.0/replicator-darwin.tar.gz"
-    sha256 "9811687b17a8cd232bd4a17b4d538e105f4e99ef30b02039a05420c22c139103"
+    url "https://github.com/pivotal-cf/replicator/releases/download/0.21.0/replicator-darwin.tar.gz"
+    sha256 "813555320a374bdc44090537eade489f4f66957393a691b5e1fa3055531a2479"
 
     define_method(:install) do
       bin.install "replicator"
@@ -28,8 +28,8 @@ class Replicator < Formula
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/pivotal-cf/replicator/releases/download/0.20.0/replicator-linux.tar.gz"
-      sha256 "618257002af41697a15f5f25eb0cdb4582de89d7469ba9e10fa42cbc796ed03b"
+      url "https://github.com/pivotal-cf/replicator/releases/download/0.21.0/replicator-linux.tar.gz"
+      sha256 "06d66820e15855725d0d8b3e84f1bd57affd389e78b8c8042f2c14e7df4a90b5"
       define_method(:install) do
         bin.install "replicator"
       end
