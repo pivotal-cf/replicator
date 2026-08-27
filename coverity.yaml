@@ -1,0 +1,9 @@
+- service: replicator
+  language: golang
+  default_branch: master
+  commit: master
+  golang_build_command: ./...
+  custom_path: .
+  multi_module_paths: ""
+  goVersion: 1.26.4
+  exclude_directories: ""
