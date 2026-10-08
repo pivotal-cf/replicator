@@ -1,0 +1,102 @@
+{
+  "config": {
+    "protocol_version": "v1.0.0",
+    "scanner_name": "govulncheck",
+    "scanner_version": "v1.3.0",
+    "db": "https://vuln.go.dev",
+    "db_last_modified": "2026-10-07T14:10:51Z",
+    "go_version": "go1.25.1",
+    "scan_level": "symbol",
+    "scan_mode": "binary"
+  }
+}
+{
+  "SBOM": {
+    "go_version": "go1.24.4",
+    "modules": [
+      {
+        "path": "github.com/pivotal-cf/replicator"
+      },
+      {
+        "path": "golang.org/x/net",
+        "version": "v0.38.0"
+      }
+    ],
+    "roots": [
+      "github.com/pivotal-cf/replicator"
+    ]
+  }
+}
+{
+  "progress": {
+    "message": "Fetching vulnerabilities from the database..."
+  }
+}
+{
+  "osv": {
+    "schema_version": "1.3.1",
+    "id": "GO-2026-4970",
+    "published": "2026-07-07T21:34:47Z",
+    "aliases": [
+      "CVE-2026-0001"
+    ]
+  }
+}
+{
+  "osv": {
+    "schema_version": "1.3.1",
+    "id": "GO-2026-9999",
+    "published": "2026-07-07T21:34:47Z"
+  }
+}
+{
+  "finding": {
+    "osv": "GO-2026-4970",
+    "fixed_version": "v0.39.0",
+    "trace": [
+      {
+        "module": "golang.org/x/net",
+        "version": "v0.38.0",
+        "package": "golang.org/x/net/html"
+      }
+    ]
+  }
+}
+{
+  "finding": {
+    "osv": "GO-2026-6443",
+    "fixed_version": "go1.24.5",
+    "trace": [
+      {
+        "module": "stdlib",
+        "version": "v1.24.4"
+      }
+    ]
+  }
+}
+{
+  "finding": {
+    "osv": "GO-2026-4970",
+    "fixed_version": "v0.39.0",
+    "trace": [
+      {
+        "module": "golang.org/x/net",
+        "version": "v0.38.0",
+        "package": "golang.org/x/net/http2"
+      }
+    ]
+  }
+}
+{
+  "finding": {
+    "osv": "GO-2026-5026",
+    "fixed_version": "go1.24.5",
+    "trace": [
+      {
+        "module": "stdlib",
+        "version": "v1.24.4",
+        "package": "net/http"
+      }
+    ]
+  }
+}

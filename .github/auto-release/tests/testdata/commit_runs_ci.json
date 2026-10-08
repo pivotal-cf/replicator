@@ -1,0 +1,27 @@
+{
+  "total_count": 2,
+  "workflow_runs": [
+    {
+      "id": 3002,
+      "name": "ci",
+      "head_branch": "master",
+      "head_sha": "cccccccccccccccccccccccccccccccccccccccc",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "run_started_at": "2026-06-10T10:05:00Z",
+      "created_at": "2026-06-10T10:04:00Z"
+    },
+    {
+      "id": 3001,
+      "name": "ci",
+      "head_branch": "master",
+      "head_sha": "cccccccccccccccccccccccccccccccccccccccc",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "failure",
+      "run_started_at": "2026-06-10T09:30:00Z",
+      "created_at": "2026-06-10T09:29:00Z"
+    }
+  ]
+}

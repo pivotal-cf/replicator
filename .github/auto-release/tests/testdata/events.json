@@ -1,0 +1,20 @@
+[
+  {
+    "id": "12345680",
+    "type": "PushEvent",
+    "created_at": "2026-06-11T11:59:30Z",
+    "payload": {"ref": "refs/heads/master"}
+  },
+  {
+    "id": "12345679",
+    "type": "CreateEvent",
+    "created_at": "2026-06-11T10:00:00Z",
+    "payload": {"ref": "0.23.0", "ref_type": "branch", "master_branch": "master"}
+  },
+  {
+    "id": "12345678",
+    "type": "CreateEvent",
+    "created_at": "2026-06-11T11:00:00Z",
+    "payload": {"ref": "0.23.0", "ref_type": "tag", "master_branch": "master"}
+  }
+]

@@ -1,0 +1,8 @@
+{
+  "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "commit": {"committer": {"name": "goreleaserbot", "date": "2026-06-10T11:00:00Z"}},
+  "stats": {"total": 4, "additions": 2, "deletions": 2},
+  "files": [
+    {"filename": "HomebrewFormula/replicator.rb", "status": "modified", "additions": 2, "deletions": 2}
+  ]
+}

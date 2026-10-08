@@ -1,0 +1,14 @@
+[
+  {
+    "ref": "refs/tags/0.21.0",
+    "node_id": "REF_0210",
+    "url": "https://api.github.com/repos/pivotal-cf/replicator/git/refs/tags/0.21.0",
+    "object": {"sha": "2222222222222222222222222222222222222222", "type": "commit", "url": "https://api.github.com/repos/pivotal-cf/replicator/git/commits/2222222222222222222222222222222222222222"}
+  },
+  {
+    "ref": "refs/tags/0.22.0",
+    "node_id": "REF_0220",
+    "url": "https://api.github.com/repos/pivotal-cf/replicator/git/refs/tags/0.22.0",
+    "object": {"sha": "ffffffffffffffffffffffffffffffffffffffff", "type": "tag", "url": "https://api.github.com/repos/pivotal-cf/replicator/git/tags/ffffffffffffffffffffffffffffffffffffffff"}
+  }
+]

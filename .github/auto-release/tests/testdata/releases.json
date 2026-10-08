@@ -1,0 +1,52 @@
+[
+  {
+    "tag_name": "0.23.0",
+    "draft": true,
+    "prerelease": false,
+    "published_at": null,
+    "target_commitish": "master",
+    "assets": []
+  },
+  {
+    "tag_name": "0.22.0",
+    "draft": false,
+    "prerelease": false,
+    "published_at": "2026-06-09T21:27:09Z",
+    "target_commitish": "master",
+    "assets": [
+      {"name": "replicator-linux", "size": 1, "digest": "sha256:d100000000000000000000000000000000000000000000000000000000000001"},
+      {"name": "replicator-linux.tar.gz", "size": 1, "digest": "sha256:d200000000000000000000000000000000000000000000000000000000000002"},
+      {"name": "replicator-darwin", "size": 1, "digest": "sha256:d300000000000000000000000000000000000000000000000000000000000003"},
+      {"name": "replicator-darwin.tar.gz", "size": 1, "digest": "sha256:d400000000000000000000000000000000000000000000000000000000000004"},
+      {"name": "replicator-windows.exe", "size": 1, "digest": "sha256:d500000000000000000000000000000000000000000000000000000000000005"},
+      {"name": "replicator-windows.zip", "size": 1, "digest": "sha256:d600000000000000000000000000000000000000000000000000000000000006"},
+      {"name": "checksums.txt", "size": 1, "digest": "sha256:d700000000000000000000000000000000000000000000000000000000000007"}
+    ]
+  },
+  {
+    "tag_name": "0.30.0",
+    "draft": false,
+    "prerelease": true,
+    "published_at": "2026-06-01T00:00:00Z",
+    "target_commitish": "master",
+    "assets": []
+  },
+  {
+    "tag_name": "v9.0.0",
+    "draft": false,
+    "prerelease": false,
+    "published_at": "2026-05-15T00:00:00Z",
+    "target_commitish": "master",
+    "assets": []
+  },
+  {
+    "tag_name": "0.21.0",
+    "draft": false,
+    "prerelease": false,
+    "published_at": "2026-05-01T12:00:00Z",
+    "target_commitish": "master",
+    "assets": [
+      {"name": "replicator-linux", "size": 1}
+    ]
+  }
+]
