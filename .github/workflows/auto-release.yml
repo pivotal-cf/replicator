@@ -49,7 +49,7 @@ jobs:
       constants_json: ${{ steps.config.outputs.constants_json }}
     steps:
       - name: Checkout tools
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           path: tools
           ref: ${{ github.sha }}
@@ -93,7 +93,7 @@ jobs:
       fixed_count: ${{ steps.decide.outputs.fixed_count }}
     steps:
       - name: Checkout tools
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           path: tools
           ref: ${{ github.sha }}
@@ -118,14 +118,14 @@ jobs:
           echo "sha=${sha}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout candidate
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           path: src
           ref: ${{ steps.candidate.outputs.sha }}
           persist-credentials: false
 
       - name: Set up Go
-        uses: actions/setup-go@v7
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
         with:
           go-version-file: src/go.mod
           cache: false
@@ -158,7 +158,7 @@ jobs:
       issues: write
     steps:
       - name: Checkout tools
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           path: tools
           ref: ${{ github.sha }}
@@ -204,7 +204,7 @@ jobs:
       actions: write
     steps:
       - name: Checkout tools
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           path: tools
           ref: ${{ github.sha }}
@@ -234,7 +234,7 @@ jobs:
       actions: write
     steps:
       - name: Checkout tools
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           path: tools
           ref: ${{ github.sha }}
