@@ -1,0 +1,39 @@
+name: auto-release-test
+
+on:
+  pull_request:
+    paths:
+      - ".github/auto-release/**"
+      - ".github/workflows/auto-release.yml"
+      - ".github/workflows/auto-release-test.yml"
+      - ".github/workflows/ci.yml"
+  push:
+    paths:
+      - ".github/auto-release/**"
+      - ".github/workflows/auto-release.yml"
+      - ".github/workflows/auto-release-test.yml"
+      - ".github/workflows/ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Offline tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Run every test (including the workflow lint test)
+        run: |
+          failed=0
+          for t in .github/auto-release/tests/*_test.sh; do
+            echo "::group::${t}"
+            bash "$t" || failed=1
+            echo "::endgroup::"
+          done
+          exit "$failed"

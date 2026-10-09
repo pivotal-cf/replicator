@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "repo": "pivotal-cf/replicator",
+  "tool": "replicator",
+  "now": "2026-10-07T12:00:00Z",
+  "trigger": "workflow_run",
+  "latest": {
+    "tag": "0.22.0",
+    "published_at": "2026-10-01T00:00:00Z",
+    "tag_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "releases": [
+    {
+      "tag": "0.22.0",
+      "draft": false,
+      "prerelease": false,
+      "published_at": "2026-10-01T00:00:00Z",
+      "assets": [
+        {"name": "replicator-linux", "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"},
+        {"name": "replicator-linux.tar.gz", "digest": null},
+        {"name": "replicator-darwin", "digest": null},
+        {"name": "replicator-darwin.tar.gz", "digest": null},
+        {"name": "replicator-windows.exe", "digest": null},
+        {"name": "replicator-windows.zip", "digest": null},
+        {"name": "checksums.txt", "digest": null}
+      ]
+    },
+    {
+      "tag": "0.21.0",
+      "draft": false,
+      "prerelease": false,
+      "published_at": "2026-05-12T02:54:26Z",
+      "assets": []
+    }
+  ],
+  "tags": [
+    {"name": "0.21.0", "object_type": "commit"},
+    {"name": "0.22.0", "object_type": "commit"}
+  ],
+  "tag_runs": {},
+  "tag_events": {},
+  "docker": {"tag": "0.22.0", "http": 200},
+  "candidate": {
+    "sha": "cccccccccccccccccccccccccccccccccccccccc",
+    "source": "workflow_run",
+    "tail_after_candidate": {"status": "identical", "commits": []},
+    "from_latest": {
+      "status": "ahead",
+      "commits": [
+        {
+          "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "committer_date": "2026-10-04T23:50:00Z",
+          "files": ["go.mod", "go.sum"],
+          "files_truncated": false,
+          "push_time": "2026-10-05T00:00:00Z"
+        },
+        {
+          "sha": "cccccccccccccccccccccccccccccccccccccccc",
+          "committer_date": "2026-10-05T01:00:00Z",
+          "files": ["README.md"],
+          "files_truncated": false,
+          "push_time": "2026-10-05T01:05:00Z"
+        }
+      ]
+    }
+  }
+}

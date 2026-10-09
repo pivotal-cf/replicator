@@ -1,0 +1,257 @@
+name: auto-release
+
+# BEGIN CONSTANTS (the only per-repo / per-owner edit point; changing behaviour = a reviewed commit)
+env:
+  RELEASE_MODE: report            # off | report | notify | approve | auto
+  #  off      do nothing (one notice line)
+  #  report   full decision, job summary only; writes nothing anywhere              <- initial value
+  #  notify   report + one tracking issue in THIS repo ("release X warranted"); a human tags
+  #  approve  act only after a reviewer approves Environment `release`
+  #  auto     act with no human in the loop
+  COOLDOWN_HOURS: 24              # wait after the newest shipped-input commit's master CI started (batches Dependabot bursts)
+  MIN_RELEASE_INTERVAL_DAYS: 3    # minimum age of the latest release
+  VERSION_BUMP: minor             # minor | patch
+  INTRODUCED_POLICY: block        # block | allow : what to do when the candidate has findings the latest asset lacks
+  MIN_FIXED_FINDINGS: 1           # fixed OSV ids required to release
+  STUCK_RELEASE_ALERT_HOURS: 2    # a tag without a published release older than this => failure + issue
+  APPROVAL_STALE_HOURS: 24        # waiting approvals older than this are cancelled by the next run; stale approvals are re-validated
+  GOVULNCHECK_VERSION: v1.3.0     # pinned
+  MAX_CANDIDATE_WINDOW: 100       # max commits between latest tag and candidate examined (else fail closed)
+# END CONSTANTS
+
+on:
+  workflow_run:
+    workflows: ["ci"]
+    types: [completed]
+    branches: [master]
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+    inputs:
+      mode_override:
+        description: "Lower the release mode for this run (none = no override)"
+        type: choice
+        options: ["none", "off", "report", "notify", "approve"]
+        default: "none"
+
+permissions: {}
+
+jobs:
+  config:
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: write
+    outputs:
+      mode: ${{ steps.config.outputs.mode }}
+      constants_json: ${{ steps.config.outputs.constants_json }}
+    steps:
+      - name: Checkout tools
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          path: tools
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Validate constants and compute the effective mode
+        id: config
+        env:
+          INPUT_MODE_OVERRIDE: ${{ inputs.mode_override || 'none' }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: bash tools/.github/auto-release/config.sh
+
+      - name: Cancel stale waiting runs
+        # Janitor runs in off and report modes as operational cleanup of stale waiting runs (>24h).
+        # In report mode, auto-release does not cut tags or create releases, but performs waiting run hygiene.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          CLI_RELEASE_WRITE: "1"
+        run: bash tools/.github/auto-release/janitor.sh
+
+  decide:
+    needs: config
+    if: needs.config.outputs.mode != 'off'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      decision: ${{ steps.decide.outputs.decision }}
+      version: ${{ steps.decide.outputs.version }}
+      candidate_sha: ${{ steps.decide.outputs.candidate_sha }}
+      eligible_at: ${{ steps.decide.outputs.eligible_at }}
+      latest: ${{ steps.decide.outputs.latest }}
+      issue_kind: ${{ steps.decide.outputs.issue_kind }}
+      issue_title: ${{ steps.decide.outputs.issue_title }}
+      issue_body: ${{ steps.decide.outputs.issue_body }}
+      close_titles: ${{ steps.decide.outputs.close_titles }}
+      close_needed: ${{ steps.decide.outputs.close_needed }}
+      stuck: ${{ steps.decide.outputs.stuck }}
+      decision_started_at: ${{ steps.decide.outputs.decision_started_at }}
+      fixed_count: ${{ steps.decide.outputs.fixed_count }}
+    steps:
+      - name: Checkout tools
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          path: tools
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Collect facts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: bash tools/.github/auto-release/collect.sh facts.json
+
+      - name: Read the candidate SHA
+        id: candidate
+        run: |
+          sha="$(jq -r '.candidate.sha // empty' facts.json)"
+          if [[ ! "$sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::facts.json has no valid candidate sha: '${sha}'"
+            exit 2
+          fi
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          path: src
+          ref: ${{ steps.candidate.outputs.sha }}
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version-file: src/go.mod
+          cache: false
+
+      - name: Install govulncheck
+        run: |
+          go install "golang.org/x/vuln/cmd/govulncheck@${GOVULNCHECK_VERSION}"
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Scan latest release and candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_DIR: src
+          WORK_DIR: work
+        run: bash tools/.github/auto-release/scan.sh facts.json scan.json
+
+      - name: Decide
+        id: decide
+        env:
+          CONSTANTS_JSON: ${{ needs.config.outputs.constants_json }}
+        run: bash tools/.github/auto-release/decide.sh facts.json scan.json
+
+  notify:
+    needs: [config, decide]
+    if: always() && needs.decide.result == 'success' && (needs.config.outputs.mode == 'notify' || needs.decide.outputs.issue_kind != '' || needs.decide.outputs.close_needed == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout tools
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          path: tools
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Update tracking issues
+        # notify step runs when an issue update/close is required.
+        # Release issues are only created in notify mode; stuck release issues and resolution closes
+        # are permitted in report/approve/auto modes so stuck conditions are surfaced and resolved issues closed.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          CLI_RELEASE_WRITE: "1"
+          MODE: ${{ needs.config.outputs.mode }}
+          ISSUE_KIND: ${{ needs.decide.outputs.issue_kind }}
+          ISSUE_TITLE: ${{ needs.decide.outputs.issue_title }}
+          ISSUE_BODY: ${{ needs.decide.outputs.issue_body }}
+          CLOSE_TITLES: ${{ needs.decide.outputs.close_titles }}
+        run: bash tools/.github/auto-release/notify.sh
+
+  finalize:
+    needs: [config, decide, notify]
+    if: always() && needs.decide.result == 'success' && needs.decide.outputs.stuck == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Fail the run for a stuck release
+        env:
+          ISSUE_TITLE: ${{ needs.decide.outputs.issue_title }}
+        run: |
+          echo "::error::${ISSUE_TITLE}"
+          exit 1
+
+  act-approve:
+    needs: [config, decide]
+    if: needs.decide.result == 'success' && needs.decide.outputs.decision == 'RELEASE' && needs.config.outputs.mode == 'approve' && needs.decide.outputs.stuck != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: release
+    concurrency:
+      group: auto-release-act
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - name: Checkout tools
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          path: tools
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Tag and dispatch ci
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          CLI_RELEASE_WRITE: "1"
+          INPUT_MODE_OVERRIDE: ${{ inputs.mode_override || 'none' }}
+          VERSION: ${{ needs.decide.outputs.version }}
+          SHA: ${{ needs.decide.outputs.candidate_sha }}
+          DECISION_STARTED_AT: ${{ needs.decide.outputs.decision_started_at }}
+        run: bash tools/.github/auto-release/act.sh
+
+  act-auto:
+    needs: [config, decide]
+    if: needs.decide.result == 'success' && needs.decide.outputs.decision == 'RELEASE' && needs.config.outputs.mode == 'auto' && needs.decide.outputs.stuck != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: auto-release-act
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - name: Checkout tools
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          path: tools
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Tag and dispatch ci
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          CLI_RELEASE_WRITE: "1"
+          INPUT_MODE_OVERRIDE: ${{ inputs.mode_override || 'none' }}
+          VERSION: ${{ needs.decide.outputs.version }}
+          SHA: ${{ needs.decide.outputs.candidate_sha }}
+          DECISION_STARTED_AT: ${{ needs.decide.outputs.decision_started_at }}
+        run: bash tools/.github/auto-release/act.sh

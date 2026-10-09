@@ -1,0 +1,16 @@
+{
+  "status": "ahead",
+  "ahead_by": 1,
+  "behind_by": 0,
+  "total_commits": 1,
+  "commits": [
+    {
+      "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "commit": {
+        "author": {"name": "goreleaserbot", "date": "2026-06-10T11:00:00Z"},
+        "committer": {"name": "goreleaserbot", "date": "2026-06-10T11:00:00Z"},
+        "message": "Brew formula update for replicator version 0.22.0"
+      }
+    }
+  ]
+}

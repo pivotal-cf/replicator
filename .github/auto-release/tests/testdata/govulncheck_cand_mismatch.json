@@ -1,0 +1,24 @@
+{
+  "config": {
+    "protocol_version": "v1.0.0",
+    "scanner_name": "govulncheck",
+    "scanner_version": "v1.3.0",
+    "db": "https://vuln.go.dev",
+    "db_last_modified": "2026-10-07T18:00:00Z",
+    "go_version": "go1.25.1",
+    "scan_level": "symbol",
+    "scan_mode": "binary"
+  }
+}
+{
+  "finding": {
+    "osv": "GO-2026-4970",
+    "fixed_version": "v0.39.0",
+    "trace": [
+      {
+        "module": "golang.org/x/net",
+        "version": "v0.38.0"
+      }
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "RELEASE_MODE": "report",
+  "COOLDOWN_HOURS": "24",
+  "MIN_RELEASE_INTERVAL_DAYS": "3",
+  "VERSION_BUMP": "minor",
+  "INTRODUCED_POLICY": "block",
+  "MIN_FIXED_FINDINGS": "1",
+  "STUCK_RELEASE_ALERT_HOURS": "2",
+  "APPROVAL_STALE_HOURS": "24",
+  "GOVULNCHECK_VERSION": "v1.3.0",
+  "MAX_CANDIDATE_WINDOW": "100",
+  "INPUT_MODE_OVERRIDE": "none",
+  "EVENT_NAME": "workflow_run",
+  "mode": "report"
+}

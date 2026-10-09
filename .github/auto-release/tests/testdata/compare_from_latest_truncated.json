@@ -1,0 +1,16 @@
+{
+  "status": "ahead",
+  "ahead_by": 3,
+  "behind_by": 0,
+  "total_commits": 3,
+  "commits": [
+    {
+      "sha": "1111111111111111111111111111111111111111",
+      "commit": {"committer": {"name": "GitHub", "date": "2026-06-10T08:00:00Z"}}
+    },
+    {
+      "sha": "cccccccccccccccccccccccccccccccccccccccc",
+      "commit": {"committer": {"name": "GitHub", "date": "2026-06-10T09:00:00Z"}}
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "progress": {
+    "message": "Scanning your binary for known vulnerabilities..."
+  }
+}
+{
+  "finding": {
+    "osv": "GO-2026-4970",
+    "trace": [
+      {
+        "module": "golang.org/x/net",
+        "version": "v0.38.0"
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+[
+  {
+    "ref": "refs/tags/0.22.0",
+    "node_id": "REF_0220",
+    "url": "https://api.github.com/repos/pivotal-cf/replicator/git/refs/tags/0.22.0",
+    "object": {"sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "type": "commit", "url": "https://api.github.com/repos/pivotal-cf/replicator/git/commits/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+  }
+]

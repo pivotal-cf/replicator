@@ -1,0 +1,1 @@
+Link: <https://api.github.com/repositories/12345/releases?per_page=100&page=2>; rel="next", <https://api.github.com/repositories/12345/releases?per_page=100&page=2>; rel="last"

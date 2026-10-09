@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "repo": "pivotal-cf/replicator",
+  "tool": "replicator",
+  "now": "2026-06-12T00:00:00Z",
+  "trigger": "workflow_run",
+  "latest": {"tag": "0.22.0", "published_at": "2026-06-09T21:27:09Z", "tag_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+  "releases": [
+    {
+      "tag": "0.22.0", "draft": false, "prerelease": false, "published_at": "2026-06-09T21:27:09Z",
+      "assets": [
+        {"name": "replicator-linux", "digest": "sha256:d100000000000000000000000000000000000000000000000000000000000001"},
+        {"name": "replicator-linux.tar.gz", "digest": "sha256:d200000000000000000000000000000000000000000000000000000000000002"},
+        {"name": "replicator-darwin", "digest": "sha256:d300000000000000000000000000000000000000000000000000000000000003"},
+        {"name": "replicator-darwin.tar.gz", "digest": "sha256:d400000000000000000000000000000000000000000000000000000000000004"},
+        {"name": "replicator-windows.exe", "digest": "sha256:d500000000000000000000000000000000000000000000000000000000000005"},
+        {"name": "replicator-windows.zip", "digest": "sha256:d600000000000000000000000000000000000000000000000000000000000006"},
+        {"name": "checksums.txt", "digest": "sha256:d700000000000000000000000000000000000000000000000000000000000007"}
+      ]
+    },
+    {
+      "tag": "0.21.0", "draft": false, "prerelease": false, "published_at": "2026-05-01T12:00:00Z",
+      "assets": [
+        {"name": "replicator-linux", "digest": null}
+      ]
+    }
+  ],
+  "tags": [
+    {"name": "0.21.0", "object_type": "commit"},
+    {"name": "0.22.0", "object_type": "commit"},
+    {"name": "0.23.0", "object_type": "commit"},
+    {"name": "old-notes", "object_type": "tag"}
+  ],
+  "tag_runs": {
+    "0.23.0": [
+      {"id": 2002, "event": "workflow_dispatch", "status": "completed", "conclusion": "failure", "created_at": "2026-06-11T13:00:00Z"},
+      {"id": 2001, "event": "push", "status": "completed", "conclusion": "failure", "created_at": "2026-06-11T11:59:00Z"}
+    ]
+  },
+  "tag_events": {"0.23.0": "2026-06-11T11:00:00Z"},
+  "docker": {"tag": "0.22.0", "http": 200},
+  "candidate": {
+    "sha": "cccccccccccccccccccccccccccccccccccccccc",
+    "source": "workflow_run",
+    "tail_after_candidate": {
+      "status": "ahead",
+      "commits": [
+        {"sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "files": ["HomebrewFormula/replicator.rb"], "files_truncated": false}
+      ]
+    },
+    "from_latest": {
+      "status": "ahead",
+      "commits": [
+        {"sha": "1111111111111111111111111111111111111111", "committer_date": "2026-06-10T08:00:00Z", "files": ["main.go", "main_test.go"], "files_truncated": false, "push_time": null},
+        {"sha": "cccccccccccccccccccccccccccccccccccccccc", "committer_date": "2026-06-10T09:00:00Z", "files": ["go.mod", "go.sum"], "files_truncated": false, "push_time": "2026-06-10T09:30:00Z"}
+      ]
+    }
+  }
+}
