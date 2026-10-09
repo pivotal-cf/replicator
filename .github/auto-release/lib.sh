@@ -215,6 +215,7 @@ summary_append() {
   fi
 }
 
+# json_get <file> <filter>
 json_get() {
   local file="${1:-}"
   local filter="${2:-}"
@@ -225,4 +226,42 @@ json_get() {
     die "json_get: file not found: $file"
   fi
   jq -r "$filter" "$file" 2>/dev/null || die "json_get: jq filter failed on $file: $filter"
+}
+# get_all_pages <endpoint> [property]
+# Fetch paginated GitHub API endpoint using --paginate.
+# If property is provided (e.g. "workflow_runs"), expects JSON object per page containing that array,
+# and returns a JSON object {"workflow_runs": [...]}.
+# If property is omitted, expects JSON array per page and returns a merged JSON array.
+# Fails closed (exit 2) on malformed page or missing array so callers never operate on partial success.
+get_all_pages() {
+  local endpoint="$1"
+  local prop="${2:-}"
+  local raw
+  raw="$(ghx --paginate "$endpoint")" || return 1
+
+  if [[ -z "${raw//[[:space:]]/}" ]]; then
+    echo "::error::paginated API returned no JSON; refusing to guess" >&2
+    return 2
+  fi
+
+  local result
+  if [[ -n "$prop" ]]; then
+    result="$(jq -c -s --arg p "$prop" '
+      if length > 0 and all(.[]; (type == "object") and (.[$p] | type == "array")) then
+        {($p): [.[][$p][]]}
+      else
+        error("malformed page response: not object with array property " + $p)
+      end
+    ' <<<"$raw" 2>/dev/null)" || return 2
+  else
+    result="$(jq -c -s '
+      if length > 0 and all(.[]; type == "array") then
+        [.[][]]
+      else
+        error("malformed page response: not JSON array")
+      end
+    ' <<<"$raw" 2>/dev/null)" || return 2
+  fi
+
+  echo "$result"
 }

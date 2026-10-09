@@ -74,6 +74,13 @@ if [[ "$endpoint" =~ repos/[^/]+/[^/]+/labels$ ]]; then
 fi
 
 if [[ "$endpoint" =~ repos/[^/]+/[^/]+/issues\? ]]; then
+  if [[ -f "$TEST_TMP/issues_page1.json" ]]; then
+    cat "$TEST_TMP/issues_page1.json"
+    if [[ -f "$TEST_TMP/issues_page2.json" ]]; then
+      cat "$TEST_TMP/issues_page2.json"
+    fi
+    exit 0
+  fi
   if [[ -f "$TEST_TMP/open_issues.json" ]]; then
     cat "$TEST_TMP/open_issues.json"
     exit 0
@@ -116,6 +123,7 @@ setup_env() {
   export GITHUB_STEP_SUMMARY="$TEST_TMP/summary.txt"
 
   rm -f "$TEST_TMP/gh_calls.log" "$TEST_TMP/gh_writes.log" "$TEST_TMP/open_issues.json" \
+        "$TEST_TMP/issues_page1.json" "$TEST_TMP/issues_page2.json" \
         "$TEST_TMP/label_exists" "$TEST_TMP/summary.txt"
   echo "[]" > "$TEST_TMP/open_issues.json"
 }
@@ -300,6 +308,61 @@ export ISSUE_TITLE="[auto-release] release 0.23.0 warranted"
 export ISSUE_BODY="Warranted release"
 assert_rc "notify.sh allows release issue in notify mode" 0 "bash '$NOTIFY_SH'"
 assert "release issue created in notify mode" "grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues -f title=\[auto-release\] release 0.23.0 warranted' '$TEST_TMP/gh_writes.log'"
+
+echo "=== Testing Multi-page Issues Pagination (>100 open issues) ==="
+setup_env
+touch "$TEST_TMP/label_exists"
+export MODE="notify"
+export ISSUE_KIND="release"
+export ISSUE_TITLE="[auto-release] release 0.23.0 warranted"
+export ISSUE_BODY="Warranted release"
+export CLOSE_TITLES='["[auto-release] release 0.22.0 warranted"]'
+
+# Page 1: 100 open issues (issues 1..100), issue 50 matches CLOSE_TITLES, issue 100 has ISSUE_TITLE
+issues_p1='['
+for i in $(seq 1 100); do
+  (( i > 1 )) && issues_p1+=','
+  if (( i == 50 )); then
+    issues_p1+="{\"number\":$i,\"title\":\"[auto-release] release 0.22.0 warranted\",\"body\":\"Old release\"}"
+  elif (( i == 100 )); then
+    issues_p1+="{\"number\":$i,\"title\":\"[auto-release] release 0.23.0 warranted\",\"body\":\"Existing target\"}"
+  else
+    issues_p1+="{\"number\":$i,\"title\":\"[auto-release] noise issue $i\",\"body\":\"noise\"}"
+  fi
+done
+issues_p1+=']'
+echo "$issues_p1" > "$TEST_TMP/issues_page1.json"
+
+# Page 2: 5 open issues (issues 101..105), issue 105 also has duplicate ISSUE_TITLE
+issues_p2='['
+for i in $(seq 101 105); do
+  (( i > 101 )) && issues_p2+=','
+  if (( i == 105 )); then
+    issues_p2+="{\"number\":$i,\"title\":\"[auto-release] release 0.23.0 warranted\",\"body\":\"Duplicate on page 2\"}"
+  else
+    issues_p2+="{\"number\":$i,\"title\":\"[auto-release] noise issue $i\",\"body\":\"noise\"}"
+  fi
+done
+issues_p2+=']'
+echo "$issues_p2" > "$TEST_TMP/issues_page2.json"
+
+assert_rc "notify.sh handles pagination across >100 issues without error" 0 "bash '$NOTIFY_SH'"
+assert "issue 50 closed from page 1" "grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues/50 -X PATCH -f state=closed' '$TEST_TMP/gh_writes.log'"
+assert "issue 100 updated on page 1" "grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues/100 -X PATCH -f body=Warranted release' '$TEST_TMP/gh_writes.log'"
+assert "duplicate issue 105 closed on page 2" "grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues/105 -X PATCH -f state=closed' '$TEST_TMP/gh_writes.log'"
+assert "no new issue created" "! grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues -f title=' '$TEST_TMP/gh_writes.log'"
+
+echo "=== Testing Malformed Issues Page Fails Closed ==="
+setup_env
+touch "$TEST_TMP/label_exists"
+export MODE="notify"
+export ISSUE_KIND="release"
+export ISSUE_TITLE="[auto-release] release 0.23.0 warranted"
+export ISSUE_BODY="Warranted release"
+echo '[{"number":1,"title":"[auto-release] foo"}]' > "$TEST_TMP/issues_page1.json"
+echo 'malformed-not-json' > "$TEST_TMP/issues_page2.json"
+assert_rc "notify.sh fails closed on malformed issues page" 2 "bash '$NOTIFY_SH'"
+assert "no issues modified on malformed page" "! grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues' '$TEST_TMP/gh_writes.log' 2>/dev/null"
 
 echo "========================================="
 echo "notify_test: $TOTAL tests, $FAILED failed"

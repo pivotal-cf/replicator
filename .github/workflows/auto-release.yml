@@ -63,6 +63,8 @@ jobs:
         run: bash tools/.github/auto-release/config.sh
 
       - name: Cancel stale waiting runs
+        # Janitor runs in off and report modes as operational cleanup of stale waiting runs (>24h).
+        # In report mode, auto-release does not cut tags or create releases, but performs waiting run hygiene.
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -165,6 +167,9 @@ jobs:
           persist-credentials: false
 
       - name: Update tracking issues
+        # notify step runs when an issue update/close is required.
+        # Release issues are only created in notify mode; stuck release issues and resolution closes
+        # are permitted in report/approve/auto modes so stuck conditions are surfaced and resolved issues closed.
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}

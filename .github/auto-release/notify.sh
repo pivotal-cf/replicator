@@ -52,8 +52,8 @@ if (( label_exists != 0 )); then
     -f description="Auto-release tracking issues" >/dev/null 2>&1 || true
 fi
 
-# 4. Fetch open issues with label 'auto-release'
-open_issues_json="$(ghx "repos/$REPO/issues?state=open&labels=auto-release&per_page=100")" || die "notify.sh: failed to fetch issues"
+# 4. Fetch open issues with label 'auto-release' across all pages
+open_issues_json="$(get_all_pages "repos/$REPO/issues?state=open&labels=auto-release&per_page=100")" || die "notify.sh: failed to fetch issues"
 
 # 5. Close open issues matching CLOSE_TITLES
 closed_count=0

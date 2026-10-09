@@ -24,8 +24,8 @@ if [[ ! "$APPROVAL_STALE_HOURS" =~ ^[0-9]+$ ]] || (( APPROVAL_STALE_HOURS < 1 ||
   die "janitor.sh: invalid APPROVAL_STALE_HOURS '${APPROVAL_STALE_HOURS}' (must be integer 1..720)"
 fi
 
-# 3. List waiting runs
-runs_json="$(ghx "repos/$REPO/actions/runs?status=waiting&per_page=100")" || die "janitor.sh: failed to fetch waiting runs"
+# 3. List waiting runs across all pages
+runs_json="$(get_all_pages "repos/$REPO/actions/runs?status=waiting&per_page=100" "workflow_runs")" || die "janitor.sh: failed to fetch waiting runs"
 
 now_iso="$(iso_now)"
 now_sec="$(epoch "$now_iso")"

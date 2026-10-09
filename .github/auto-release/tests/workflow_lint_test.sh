@@ -189,5 +189,11 @@ check "test workflow: runs every tests/*_test.sh" \
 check "ci.yml: on.workflow_dispatch present" "$(jq -c '.on | has("workflow_dispatch")' <<<"$CI")" "true"
 check "ci.yml: workflow name is ci" "$(jq -r '.name' <<<"$CI")" "ci"
 
+# --- ci.yml: action pins by 40-hex SHA ---
+while IFS= read -r u; do
+  check "ci.yml: uses '${u}' pinned by 40-hex SHA" \
+    "$(grep -cE '^[A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+@[0-9a-f]{40}$' <<<"$u" || true)" "1"
+done < <(jq -r '.. | objects | select(has("uses")) | .uses' <<<"$CI")
+
 echo "workflow_lint_test: ${TOTAL} tests, ${FAILED} failed"
 (( FAILED == 0 ))

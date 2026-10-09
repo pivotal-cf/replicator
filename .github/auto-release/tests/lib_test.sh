@@ -134,6 +134,51 @@ assert "json_get extracts string" "[[ \"\$(json_get \"$TEST_JSON\" '.name')\" ==
 assert "json_get extracts number" "[[ \"\$(json_get \"$TEST_JSON\" '.count')\" == '42' ]]"
 assert_rc "json_get missing file exits 2" 2 "json_get '$TEST_TMP/missing.json' '.name'"
 
+echo "=== Testing get_all_pages ==="
+# Test array shape (no prop)
+cat << 'EOF' > "$TEST_TMP/bin/gh"
+#!/usr/bin/env bash
+if [[ "$*" =~ repos/pivotal-cf/replicator/array_paged ]]; then
+  echo '[{"id":1},{"id":2}]'
+  echo '[{"id":3}]'
+  exit 0
+elif [[ "$*" =~ repos/pivotal-cf/replicator/array_empty ]]; then
+  echo '[]'
+  exit 0
+elif [[ "$*" =~ repos/pivotal-cf/replicator/object_paged ]]; then
+  echo '{"workflow_runs":[{"id":10},{"id":20}]}'
+  echo '{"workflow_runs":[{"id":30}]}'
+  exit 0
+elif [[ "$*" =~ repos/pivotal-cf/replicator/object_empty ]]; then
+  echo '{"workflow_runs":[]}'
+  exit 0
+elif [[ "$*" =~ repos/pivotal-cf/replicator/no_json ]]; then
+  exit 0
+elif [[ "$*" =~ repos/pivotal-cf/replicator/malformed ]]; then
+  echo '{"workflow_runs":[{"id":1}]}'
+  echo 'malformed-raw-string'
+  exit 0
+elif [[ "$*" =~ repos/pivotal-cf/replicator/failed ]]; then
+  echo "500 Internal Server Error" >&2
+  exit 1
+fi
+echo "[]"
+exit 0
+EOF
+chmod +x "$TEST_TMP/bin/gh"
+
+assert "get_all_pages merges array pages" \
+  "[[ \"\$(get_all_pages 'repos/pivotal-cf/replicator/array_paged')\" == '[{\"id\":1},{\"id\":2},{\"id\":3}]' ]]"
+assert "get_all_pages handles empty array response" \
+  "[[ \"\$(get_all_pages 'repos/pivotal-cf/replicator/array_empty')\" == '[]' ]]"
+assert "get_all_pages merges object property pages" \
+  "[[ \"\$(get_all_pages 'repos/pivotal-cf/replicator/object_paged' 'workflow_runs')\" == '{\"workflow_runs\":[{\"id\":10},{\"id\":20},{\"id\":30}]}' ]]"
+assert "get_all_pages handles empty object response" \
+  "[[ \"\$(get_all_pages 'repos/pivotal-cf/replicator/object_empty' 'workflow_runs')\" == '{\"workflow_runs\":[]}' ]]"
+assert_rc "get_all_pages fails on malformed page" 2 "get_all_pages 'repos/pivotal-cf/replicator/malformed' 'workflow_runs'"
+assert_rc "get_all_pages fails on empty body" 2 "get_all_pages 'repos/pivotal-cf/replicator/no_json'"
+assert_rc "get_all_pages fails on api error" 1 "get_all_pages 'repos/pivotal-cf/replicator/failed'"
+
 echo "========================================="
 echo "lib_test: $TOTAL tests, $FAILED failed"
 if (( FAILED > 0 )); then

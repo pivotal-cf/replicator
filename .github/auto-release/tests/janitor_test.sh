@@ -56,6 +56,13 @@ if (( is_write )); then
 fi
 
 if [[ "$endpoint" =~ repos/[^/]+/[^/]+/actions/runs\? ]]; then
+  if [[ -f "$TEST_TMP/runs_page1.json" ]]; then
+    cat "$TEST_TMP/runs_page1.json"
+    if [[ -f "$TEST_TMP/runs_page2.json" ]]; then
+      cat "$TEST_TMP/runs_page2.json"
+    fi
+    exit 0
+  fi
   if [[ -f "$TEST_TMP/runs.json" ]]; then
     cat "$TEST_TMP/runs.json"
     exit 0
@@ -90,6 +97,7 @@ setup_env() {
   export GITHUB_STEP_SUMMARY="$TEST_TMP/summary.txt"
 
   rm -f "$TEST_TMP/gh_calls.log" "$TEST_TMP/gh_writes.log" "$TEST_TMP/runs.json" \
+        "$TEST_TMP/runs_page1.json" "$TEST_TMP/runs_page2.json" \
         "$TEST_TMP/cancel_fail" "$TEST_TMP/summary.txt"
   echo '{"workflow_runs":[]}' > "$TEST_TMP/runs.json"
 }
@@ -170,6 +178,40 @@ cat << 'EOF' > "$TEST_TMP/runs.json"
 EOF
 # Must warn and exit 0, NOT crash or exit non-zero
 assert_rc "janitor.sh warns but exits 0 when cancel API call fails" 0 "bash '$JANITOR_SH'"
+
+echo "=== Testing Multi-page Waiting Runs Pagination (>100 entries) ==="
+setup_env
+# Page 1: 100 runs, all stale auto-release.yml (runs 1001..1100)
+runs_p1='{"workflow_runs":['
+for i in $(seq 1001 1100); do
+  (( i > 1001 )) && runs_p1+=','
+  runs_p1+="{\"id\":$i,\"path\":\".github/workflows/auto-release.yml\",\"status\":\"waiting\",\"created_at\":\"2026-10-05T12:00:00Z\"}"
+done
+runs_p1+=']}'
+echo "$runs_p1" > "$TEST_TMP/runs_page1.json"
+
+# Page 2: 5 runs, stale auto-release.yml (runs 1101..1105)
+runs_p2='{"workflow_runs":['
+for i in $(seq 1101 1105); do
+  (( i > 1101 )) && runs_p2+=','
+  runs_p2+="{\"id\":$i,\"path\":\".github/workflows/auto-release.yml\",\"status\":\"waiting\",\"created_at\":\"2026-10-05T12:00:00Z\"}"
+done
+runs_p2+=']}'
+echo "$runs_p2" > "$TEST_TMP/runs_page2.json"
+
+assert_rc "janitor.sh processes across all pages without error" 0 "bash '$JANITOR_SH'"
+assert "cancelled run from page 1" "grep -q '1001/cancel' '$TEST_TMP/gh_writes.log'"
+assert "cancelled run 1100 from page 1" "grep -q '1100/cancel' '$TEST_TMP/gh_writes.log'"
+assert "cancelled run 1105 from page 2" "grep -q '1105/cancel' '$TEST_TMP/gh_writes.log'"
+cancel_lines="$(grep -c '/cancel' "$TEST_TMP/gh_writes.log" || true)"
+assert "total 105 stale runs cancelled across pages" "[[ '$cancel_lines' == '105' ]]"
+
+echo "=== Testing Malformed Page Fails Closed (No Partial Execution) ==="
+setup_env
+echo '{"workflow_runs":[{"id":2001,"path":".github/workflows/auto-release.yml","status":"waiting","created_at":"2026-10-05T12:00:00Z"}]}' > "$TEST_TMP/runs_page1.json"
+echo 'malformed-not-json' > "$TEST_TMP/runs_page2.json"
+assert_rc "janitor.sh fails closed on malformed page" 2 "bash '$JANITOR_SH'"
+assert "no runs cancelled on malformed page" "! grep -q '/cancel' '$TEST_TMP/gh_writes.log' 2>/dev/null"
 
 echo "========================================="
 echo "janitor_test: $TOTAL tests, $FAILED failed"
