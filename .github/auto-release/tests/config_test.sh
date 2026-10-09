@@ -5,6 +5,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_SCRIPT="${SCRIPT_DIR}/../config.sh"
 
+# Clear GitHub Actions runner output variables so unit tests default to stdout mode
+unset GITHUB_OUTPUT GITHUB_STEP_SUMMARY
+
 FAILED=0
 TOTAL=0
 
@@ -53,6 +56,7 @@ run_config() {
   local EN="${TEST_EVENT_NAME-workflow_run}"
 
   (
+    unset GITHUB_OUTPUT GITHUB_STEP_SUMMARY
     export RELEASE_MODE="$RM"
     export COOLDOWN_HOURS="$CH"
     export MIN_RELEASE_INTERVAL_DAYS="$MRI"
