@@ -3,41 +3,11 @@ set -euo pipefail
 
 # config_test.sh - Unit tests for config.sh
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/test_support.sh"
 CONFIG_SCRIPT="${SCRIPT_DIR}/../config.sh"
 
 # Clear GitHub Actions runner output variables so unit tests default to stdout mode
 unset GITHUB_OUTPUT GITHUB_STEP_SUMMARY
-
-FAILED=0
-TOTAL=0
-
-assert() {
-  local desc="$1"
-  local cond="$2"
-  TOTAL=$(( TOTAL + 1 ))
-  if eval "$cond"; then
-    echo "PASS: $desc"
-  else
-    echo "FAIL: $desc"
-    FAILED=$(( FAILED + 1 ))
-  fi
-}
-
-# assert_rc <desc> <expected exit code> <command>: run command in a subshell
-assert_rc() {
-  local desc="$1" want="$2" cmd="$3" rc=0
-  TOTAL=$(( TOTAL + 1 ))
-  ( eval "$cmd" ) >/dev/null 2>&1 || rc=$?
-  if [[ "$rc" == "$want" ]]; then
-    echo "PASS: $desc"
-  else
-    echo "FAIL: $desc (exit $rc, want $want)"
-    FAILED=$(( FAILED + 1 ))
-  fi
-}
-
-TEST_TMP="$(mktemp -d)"
-trap 'rm -rf "$TEST_TMP"' EXIT
 
 # Helper to run config.sh with given env overrides
 run_config() {
@@ -258,9 +228,4 @@ assert "constants_json has EVENT_NAME == 'workflow_dispatch'" "[[ \"\$(echo '$JS
 assert "step summary written" "grep -q '### Auto-Release Configuration' '$SUMMARY_FILE'"
 assert "step summary has effective mode" "grep -q 'Effective Mode.*approve' '$SUMMARY_FILE'"
 
-echo "========================================="
-echo "config_test: $TOTAL tests, $FAILED failed"
-if (( FAILED > 0 )); then
-  exit 1
-fi
-exit 0
+test_finish "config_test"

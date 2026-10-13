@@ -31,7 +31,17 @@ db_last_modified() {
 }
 
 findings() {
-  jq -c -s '[.[] | objects | .finding | objects | .osv | strings] | unique' "$1" 2>/dev/null
+  jq -c -s '[.[] | if type == "object" and has("finding") then
+    if (.finding | type) != "object" then
+      error("malformed finding record: finding must be an object")
+    elif (.finding | has("osv") | not) or ((.finding.osv | type) != "string") or .finding.osv == "" then
+      error("malformed finding record: osv must be a non-empty string")
+    else
+      .finding.osv
+    end
+  else
+    empty
+  end] | unique' "$1" 2>/dev/null
 }
 
 FACTS="${1:-}"

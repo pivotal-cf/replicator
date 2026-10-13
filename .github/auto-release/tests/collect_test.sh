@@ -3,29 +3,12 @@ set -euo pipefail
 
 # collect_test.sh - Offline tests for collect.sh (fake gh, curl and sleep on PATH)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/test_support.sh"
 COLLECT="${SCRIPT_DIR}/../collect.sh"
 TESTDATA_DIR="${SCRIPT_DIR}/testdata"
 
-FAILED=0
-TOTAL=0
-
-assert() {
-  local desc="$1"
-  local cond="$2"
-  TOTAL=$(( TOTAL + 1 ))
-  if eval "$cond"; then
-    echo "PASS: $desc"
-  else
-    echo "FAIL: $desc"
-    FAILED=$(( FAILED + 1 ))
-  fi
-}
-
 CAND="cccccccccccccccccccccccccccccccccccccccc"
 
-TEST_TMP="$(mktemp -d)"
-trap 'rm -rf "$TEST_TMP"' EXIT
-mkdir -p "$TEST_TMP/bin"
 FAKE_LOG="$TEST_TMP/calls.log"
 FAKE_STATE="$TEST_TMP/state"
 export TESTDATA_DIR FAKE_LOG FAKE_STATE
@@ -260,9 +243,4 @@ OUT="$TEST_TMP/diverged.json"
 collect_case "diverged candidate is recorded without fetching its commits" 0 "$OUT" FAKE_FROM_LATEST=compare_from_latest_diverged.json
 assert "from_latest diverged with no commits" "[[ \$(q '$OUT' '.candidate.from_latest') == '{\"status\":\"diverged\",\"commits\":[]}' ]]"
 
-echo ""
-echo "collect_test: $TOTAL tests, $FAILED failed"
-if (( FAILED > 0 )); then
-  exit 1
-fi
-exit 0
+test_finish "collect_test"

@@ -3,39 +3,9 @@ set -euo pipefail
 
 # notify_test.sh - Unit tests for notify.sh
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/test_support.sh"
 NOTIFY_SH="${SCRIPT_DIR}/../notify.sh"
 
-FAILED=0
-TOTAL=0
-
-assert() {
-  local desc="$1"
-  local cond="$2"
-  TOTAL=$(( TOTAL + 1 ))
-  if eval "$cond"; then
-    echo "PASS: $desc"
-  else
-    echo "FAIL: $desc"
-    FAILED=$(( FAILED + 1 ))
-  fi
-}
-
-assert_rc() {
-  local desc="$1" want="$2" cmd="$3" rc=0
-  TOTAL=$(( TOTAL + 1 ))
-  ( eval "$cmd" ) >/dev/null 2>&1 || rc=$?
-  if [[ "$rc" == "$want" ]]; then
-    echo "PASS: $desc"
-  else
-    echo "FAIL: $desc (exit $rc, want $want)"
-    FAILED=$(( FAILED + 1 ))
-  fi
-}
-
-TEST_TMP="$(mktemp -d)"
-trap 'rm -rf "$TEST_TMP"' EXIT
-
-mkdir -p "$TEST_TMP/bin"
 cat << 'EOF' > "$TEST_TMP/bin/gh"
 #!/usr/bin/env bash
 echo "$*" >> "$TEST_TMP/gh_calls.log"
@@ -109,9 +79,6 @@ exit 0
 EOF
 
 chmod +x "$TEST_TMP/bin/gh"
-ORIG_PATH="$PATH"
-export PATH="$TEST_TMP/bin:$ORIG_PATH"
-export TEST_TMP
 
 setup_env() {
   export CLI_RELEASE_WRITE=1
@@ -227,6 +194,75 @@ assert_rc "notify.sh closes titles in CLOSE_TITLES" 0 "bash '$NOTIFY_SH'"
 assert "issue 5 received comment" "grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues/5/comments' '$TEST_TMP/gh_writes.log'"
 assert "issue 5 was closed" "grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues/5 -X PATCH -f state=closed' '$TEST_TMP/gh_writes.log'"
 assert "unrelated issue 6 was not closed" "! grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues/6' '$TEST_TMP/gh_writes.log'"
+
+echo "=== Testing Pull Request Filtering (Regression R2) ==="
+# Closure path: PR record with matching title must not be closed/commented, while real matching issue must be closed
+setup_env
+touch "$TEST_TMP/label_exists"
+export CLOSE_TITLES='["[auto-release] release 0.22.0 warranted"]'
+export ISSUE_TITLE=""
+cat << 'EOF' > "$TEST_TMP/open_issues.json"
+[
+  {"number": 5, "title": "[auto-release] release 0.22.0 warranted", "body": "Real issue to close"},
+  {"number": 123, "title": "[auto-release] release 0.22.0 warranted", "body": "PR matching close title", "pull_request": {"url": "https://api.github.com/repos/pivotal-cf/replicator/pulls/123"}},
+  {"number": 6, "title": "[auto-release] other open issue", "body": "Unrelated issue"}
+]
+EOF
+assert_rc "notify.sh ignores PR records and closes real matching issue" 0 "bash '$NOTIFY_SH'"
+assert "real issue 5 received comment" "grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues/5/comments' '$TEST_TMP/gh_writes.log'"
+assert "real issue 5 was closed" "grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues/5 -X PATCH -f state=closed' '$TEST_TMP/gh_writes.log'"
+assert "PR 123 received no comments" "! grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues/123/comments' '$TEST_TMP/gh_writes.log'"
+assert "PR 123 was not closed" "! grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues/123 -X PATCH' '$TEST_TMP/gh_writes.log'"
+assert "unrelated issue 6 was not closed" "! grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues/6' '$TEST_TMP/gh_writes.log'"
+assert "summary mentions real issue 5 closed" "grep -q 'Closed auto-release issue #5' '$TEST_TMP/summary.txt'"
+assert "summary does not mention PR 123" "! grep -q '123' '$TEST_TMP/summary.txt'"
+
+# Update path: PR record with matching title must not prevent issue creation or receive updates
+setup_env
+touch "$TEST_TMP/label_exists"
+export ISSUE_TITLE="[auto-release] release 0.23.0 warranted"
+export ISSUE_BODY="Release details here"
+cat << 'EOF' > "$TEST_TMP/open_issues.json"
+[
+  {"number": 123, "title": "[auto-release] release 0.23.0 warranted", "body": "PR with matching title", "pull_request": {"url": "https://api.github.com/repos/pivotal-cf/replicator/pulls/123"}}
+]
+EOF
+assert_rc "notify.sh creates issue when only PR record matches title" 0 "bash '$NOTIFY_SH'"
+assert "new issue was created via POST" "grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues -f title=\[auto-release\] release 0.23.0 warranted' '$TEST_TMP/gh_writes.log'"
+assert "PR 123 was not updated" "! grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues/123' '$TEST_TMP/gh_writes.log'"
+assert "summary mentions created issue" "grep -q 'Created auto-release issue' '$TEST_TMP/summary.txt'"
+assert "summary does not mention PR 123" "! grep -q '123' '$TEST_TMP/summary.txt'"
+
+# Update path: When real issue and PR record both have matching title, real issue updates and PR is not closed as duplicate
+setup_env
+touch "$TEST_TMP/label_exists"
+export ISSUE_TITLE="[auto-release] release 0.23.0 warranted"
+export ISSUE_BODY="Updated body"
+cat << 'EOF' > "$TEST_TMP/open_issues.json"
+[
+  {"number": 10, "title": "[auto-release] release 0.23.0 warranted", "body": "Existing real issue"},
+  {"number": 123, "title": "[auto-release] release 0.23.0 warranted", "body": "PR matching title", "pull_request": {"url": "https://api.github.com/repos/pivotal-cf/replicator/pulls/123"}}
+]
+EOF
+assert_rc "notify.sh updates real issue without treating PR record as duplicate" 0 "bash '$NOTIFY_SH'"
+assert "real issue 10 was updated" "grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues/10 -X PATCH -f body=Updated body' '$TEST_TMP/gh_writes.log'"
+assert "PR 123 was not updated or closed" "! grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues/123' '$TEST_TMP/gh_writes.log'"
+assert "summary mentions updated issue #10" "grep -q 'Updated auto-release issue #10' '$TEST_TMP/summary.txt'"
+assert "summary does not mention closing duplicate for PR 123" "! grep -q 'Closed duplicate auto-release issue #123' '$TEST_TMP/summary.txt'"
+
+# Real issue with pull_request: null is retained as real issue
+setup_env
+touch "$TEST_TMP/label_exists"
+export ISSUE_TITLE="[auto-release] release 0.23.0 warranted"
+export ISSUE_BODY="Updated body"
+cat << 'EOF' > "$TEST_TMP/open_issues.json"
+[
+  {"number": 20, "title": "[auto-release] release 0.23.0 warranted", "body": "Real issue with null pull_request", "pull_request": null}
+]
+EOF
+assert_rc "notify.sh updates real issue even if pull_request is null" 0 "bash '$NOTIFY_SH'"
+assert "issue 20 was updated" "grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues/20 -X PATCH -f body=Updated body' '$TEST_TMP/gh_writes.log'"
+assert "summary mentions updated issue #20" "grep -q 'Updated auto-release issue #20' '$TEST_TMP/summary.txt'"
 
 echo "=== Testing Stuck Issue Handling ==="
 setup_env
@@ -364,9 +400,4 @@ echo 'malformed-not-json' > "$TEST_TMP/issues_page2.json"
 assert_rc "notify.sh fails closed on malformed issues page" 2 "bash '$NOTIFY_SH'"
 assert "no issues modified on malformed page" "! grep -q 'API_WRITE: repos/pivotal-cf/replicator/issues' '$TEST_TMP/gh_writes.log' 2>/dev/null"
 
-echo "========================================="
-echo "notify_test: $TOTAL tests, $FAILED failed"
-if (( FAILED > 0 )); then
-  exit 1
-fi
-exit 0
+test_finish "notify_test"

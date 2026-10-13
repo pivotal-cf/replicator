@@ -185,10 +185,10 @@ decide_flow() {
     for t in $above; do
       local since since_epoch age
       since="$(fq --arg t "$t" '([(.tag_runs[$t] // [])[].created_at | strings] | min)
-                 // (.tag_events[$t] | strings) // ([.tags[] | select(.name == $t) | .committer_date | strings][0]) // empty')"
+                 // (.tag_events[$t] | strings) // empty')"
       if [[ -z "$since" ]]; then
         set_stuck "$t" "[auto-release] stuck release ${t}" \
-          "Tag ${t} has no published release and no ci run, CreateEvent or commit date to age it."
+          "Tag ${t} has no published release and no ci run or CreateEvent to age it."
         return
       fi
       since_epoch="$(epoch "$since")"

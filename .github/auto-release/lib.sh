@@ -49,6 +49,18 @@ semver_cmp() {
   echo "0"
 }
 
+# Mode hierarchy: auto > approve > notify > report > off
+mode_rank() {
+  case "$1" in
+    off) echo 0 ;;
+    report) echo 1 ;;
+    notify) echo 2 ;;
+    approve) echo 3 ;;
+    auto) echo 4 ;;
+    *) echo -1 ;;
+  esac
+}
+
 epoch() {
   local ts="${1:-}"
   if [[ -z "$ts" ]]; then
@@ -125,20 +137,16 @@ ghx_write() {
   require_write
 
   # Allowed operations:
-  # 1. gh workflow run ...
-  # 2. gh api POST to allowed endpoints:
-  #    - repos/:owner/:repo/git/refs
-  #    - repos/:owner/:repo/issues
+  # gh api calls to allowed endpoints:
+  #    - repos/:owner/:repo/git/refs (POST)
+  #    - repos/:owner/:repo/actions/workflows/ci.yml/dispatches (POST)
+  #    - repos/:owner/:repo/issues (POST)
   #    - repos/:owner/:repo/issues/:id (PATCH)
-  #    - repos/:owner/:repo/issues/:id/comments
-  #    - repos/:owner/:repo/labels
-  #    - repos/:owner/:repo/actions/runs/:id/cancel
-  if [[ "${1:-}" == "workflow" && "${2:-}" == "run" ]]; then
-    gh "$@"
-    return $?
-  fi
+  #    - repos/:owner/:repo/issues/:id/comments (POST)
+  #    - repos/:owner/:repo/labels (POST)
+  #    - repos/:owner/:repo/actions/runs/:id/cancel (POST)
 
-  # Otherwise inspect the api call
+  # Inspect the api call
   local endpoint=""
   local method="POST"
   local i=1
@@ -187,6 +195,8 @@ ghx_write() {
   local allowed=0
   if [[ "$endpoint" =~ ^repos/[^/]+/[^/]+/git/refs$ && "$method" == "POST" ]]; then
     allowed=1
+  elif [[ "$endpoint" =~ ^repos/[^/]+/[^/]+/actions/workflows/ci\.yml/dispatches$ && "$method" == "POST" ]]; then
+    allowed=1
   elif [[ "$endpoint" =~ ^repos/[^/]+/[^/]+/issues$ && "$method" == "POST" ]]; then
     allowed=1
   elif [[ "$endpoint" =~ ^repos/[^/]+/[^/]+/issues/[0-9]+$ && "$method" == "PATCH" ]]; then
@@ -215,18 +225,6 @@ summary_append() {
   fi
 }
 
-# json_get <file> <filter>
-json_get() {
-  local file="${1:-}"
-  local filter="${2:-}"
-  if [[ -z "$file" || -z "$filter" ]]; then
-    die "json_get: missing file or filter arguments"
-  fi
-  if [[ ! -f "$file" ]]; then
-    die "json_get: file not found: $file"
-  fi
-  jq -r "$filter" "$file" 2>/dev/null || die "json_get: jq filter failed on $file: $filter"
-}
 # get_all_pages <endpoint> [property]
 # Fetch paginated GitHub API endpoint using --paginate.
 # If property is provided (e.g. "workflow_runs"), expects JSON object per page containing that array,

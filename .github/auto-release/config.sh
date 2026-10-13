@@ -83,18 +83,6 @@ if [[ -z "$EVENT_NAME" || "$EVENT_NAME" =~ ^[[:space:]]+$ ]]; then
   die "Invalid EVENT_NAME: missing or whitespace"
 fi
 
-# Mode hierarchy: auto > approve > notify > report > off
-mode_rank() {
-  case "$1" in
-    off) echo 0 ;;
-    report) echo 1 ;;
-    notify) echo 2 ;;
-    approve) echo 3 ;;
-    auto) echo 4 ;;
-    *) echo -1 ;;
-  esac
-}
-
 # Effective mode calculation:
 # Override can only LOWER along auto > approve > notify > report > off; 'none' = no override.
 if [[ "$INPUT_MODE_OVERRIDE" == "none" ]]; then

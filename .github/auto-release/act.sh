@@ -44,17 +44,6 @@ fi
 RELEASE_MODE="${RELEASE_MODE:-}"
 INPUT_MODE_OVERRIDE="${INPUT_MODE_OVERRIDE:-none}"
 
-mode_rank() {
-  case "$1" in
-    off) echo 0 ;;
-    report) echo 1 ;;
-    notify) echo 2 ;;
-    approve) echo 3 ;;
-    auto) echo 4 ;;
-    *) echo -1 ;;
-  esac
-}
-
 rel_rank="$(mode_rank "$RELEASE_MODE")"
 if (( rel_rank < 0 )); then
   die "act.sh: invalid RELEASE_MODE '${RELEASE_MODE}'"
@@ -251,76 +240,37 @@ if (( ref_rc != 0 )); then
 fi
 
 # 6. Dispatch ci.yml on the new tag
-# Capture dispatch timestamp and filter boundary to distinguish any prior runs from the current dispatch.
-# Allow a small 10s buffer for clock skew between runner and GitHub API servers.
-dispatch_started_at="$(iso_now)"
-dispatch_started_epoch="$(epoch "$dispatch_started_at")"
-dispatch_filter_epoch=$(( dispatch_started_epoch - 10 ))
-dispatch_created_filter="$(jq -nr --argjson ep "$dispatch_filter_epoch" 'try ($ep | todateiso8601) catch empty' 2>/dev/null || true)"
-if [[ -z "$dispatch_created_filter" ]]; then
-  dispatch_created_filter="$dispatch_started_at"
-fi
+# Token-created tags do not trigger push workflows; explicit workflow_dispatch is required.
+# Uses POST repos/$REPO/actions/workflows/ci.yml/dispatches with return_run_details=true.
+# Current official contract returns HTTP 200 with {workflow_run_id:number, run_url, html_url}.
+dispatch_resp="$(ghx_write "repos/$REPO/actions/workflows/ci.yml/dispatches" \
+  -f ref="$VERSION" \
+  -F return_run_details=true)" || die "act.sh: POST ci.yml/dispatches failed"
 
-ghx_write workflow run ci.yml -R "$REPO" --ref "$VERSION"
+dispatched_run_id="$(jq -er --arg repo "$REPO" '
+  select(
+    type == "object" and
+    (.workflow_run_id | type == "number" and floor == . and . > 0) and
+    .run_url == "https://api.github.com/repos/\($repo)/actions/runs/\(.workflow_run_id)" and
+    .html_url == "https://github.com/\($repo)/actions/runs/\(.workflow_run_id)"
+  ) | .workflow_run_id
+' <<<"$dispatch_resp" 2>/dev/null)" || die "act.sh: dispatch response failed schema or URL validation"
 
-# 7. Poll up to 120s (injectable) for workflow_dispatch run on that tag, failing if none.
-# Uses API-supported timestamp filter (created=>=...) to exclude historical runs,
-# and strictly validates event, tag/ref, candidate SHA, and creation timestamp.
-# Unchecked workflow_runs[0] fallback is forbidden.
-POLL_TIMEOUT_SECONDS="${POLL_TIMEOUT_SECONDS:-120}"
-POLL_INTERVAL_SECONDS="${POLL_INTERVAL_SECONDS:-5}"
+# 7. Retain commit/tag identity checks by fetching the dispatched run
+run_json="$(ghx "repos/$REPO/actions/runs/$dispatched_run_id")" || die "act.sh: failed to fetch dispatched run ${dispatched_run_id}"
 
-poll_elapsed=0
-step_interval="$POLL_INTERVAL_SECONDS"
-if (( step_interval <= 0 )); then
-  step_interval=1
-fi
+jq -e --arg id "$dispatched_run_id" --arg ver "$VERSION" --arg sha "$SHA" '
+  type == "object" and
+  (.id | tostring) == $id and
+  .event == "workflow_dispatch" and
+  (.head_branch == $ver or .head_branch == "refs/tags/" + $ver) and
+  .head_sha == $sha
+' <<<"$run_json" >/dev/null 2>&1 || die "act.sh: fetched run failed identity verification"
 
-dispatched_run_id=""
-while (( poll_elapsed <= POLL_TIMEOUT_SECONDS )); do
-  dispatch_runs_json="$(ghx "repos/$REPO/actions/workflows/ci.yml/runs?event=workflow_dispatch&branch=$VERSION&created=>=$dispatch_created_filter")" || true
-  dispatched_run_id="$(echo "$dispatch_runs_json" | jq -r \
-    --arg v "$VERSION" \
-    --arg sha "$SHA" \
-    --argjson min_epoch "$dispatch_filter_epoch" '
-    if type == "object" and (.workflow_runs | type == "array") then
-      [ .workflow_runs[] | select(
-          .event == "workflow_dispatch" and
-          (.head_branch == $v or .head_branch == ("refs/tags/" + $v)) and
-          .head_sha == $sha and
-          (
-            ((.created_at // "") | sub("\\.[0-9]+Z$"; "Z") | try fromdateiso8601 catch 0) >= $min_epoch
-          )
-        )
-      ] | sort_by(.created_at) | reverse | .[0].id // empty
-    else
-      empty
-    end
-  ' 2>/dev/null || echo "")"
-
-  if [[ -n "$dispatched_run_id" ]]; then
-    break
-  fi
-
-  if (( poll_elapsed >= POLL_TIMEOUT_SECONDS )); then
-    break
-  fi
-
-  if (( POLL_INTERVAL_SECONDS > 0 )); then
-    sleep "$POLL_INTERVAL_SECONDS" 2>/dev/null || true
-  fi
-  poll_elapsed=$(( poll_elapsed + step_interval ))
-done
-
-if [[ -z "$dispatched_run_id" ]]; then
-  die "act.sh: no workflow_dispatch run observed for tag '${VERSION}' within ${POLL_TIMEOUT_SECONDS}s"
-fi
-
-run_url="https://github.com/$REPO/actions/runs/$dispatched_run_id"
 summary_append "### Release Act Succeeded"
 summary_append "- **Version**: \`${VERSION}\`"
 summary_append "- **Candidate SHA**: \`${SHA}\`"
 summary_append "- **Mode**: \`${effective_mode}\`"
-summary_append "- **Dispatched CI Run**: [${dispatched_run_id}](${run_url})"
+summary_append "- **Dispatched CI Run**: [${dispatched_run_id}](https://github.com/${REPO}/actions/runs/${dispatched_run_id})"
 
 exit 0

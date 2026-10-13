@@ -216,10 +216,6 @@ expect "tag above, no run, CreateEvent 30 min old" 0 STOP
 eq "tag above, CreateEvent young: not stuck" "false" "$(d '.stuck')"
 run "$ABOVE"' | .tag_events["0.23.0"] = "2026-10-07T08:00:00Z"'
 eq "tag above, CreateEvent 4 h old: stuck" "true" "$(d '.stuck')"
-run '.tags += [{"name": "0.23.0", "object_type": "commit", "committer_date": "2026-10-07T11:00:00Z"}] | .tag_events["0.23.0"] = null'
-eq "tag above, only a young committer date: not stuck" "false" "$(d '.stuck')"
-run '.tags += [{"name": "0.23.0", "object_type": "commit", "committer_date": "2026-10-06T00:00:00Z"}]'
-eq "tag above, only an old committer date: stuck" "true" "$(d '.stuck')"
 run "$ABOVE"
 expect "tag above, nothing to age it" 0 STOP
 eq "tag above, nothing to age it: stuck" "true" "$(d '.stuck')"

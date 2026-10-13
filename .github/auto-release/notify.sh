@@ -54,6 +54,8 @@ fi
 
 # 4. Fetch open issues with label 'auto-release' across all pages
 open_issues_json="$(get_all_pages "repos/$REPO/issues?state=open&labels=auto-release&per_page=100")" || die "notify.sh: failed to fetch issues"
+# The issues endpoint also returns pull requests; only manage actual issues.
+open_issues_json="$(echo "$open_issues_json" | jq -c '[.[]? | select(.pull_request == null)]')" || die "notify.sh: failed to filter pull requests"
 
 # 5. Close open issues matching CLOSE_TITLES
 closed_count=0

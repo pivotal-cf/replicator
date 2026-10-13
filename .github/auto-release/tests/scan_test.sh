@@ -3,35 +3,11 @@ set -euo pipefail
 
 # scan_test.sh - Offline tests for scan.sh (fake gh, go and govulncheck on PATH)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/test_support.sh"
 SCAN="${SCRIPT_DIR}/../scan.sh"
 TESTDATA_DIR="${SCRIPT_DIR}/testdata"
 
-FAILED=0
-TOTAL=0
-
-assert() {
-  local desc="$1"
-  local cond="$2"
-  TOTAL=$(( TOTAL + 1 ))
-  if eval "$cond"; then
-    echo "PASS: $desc"
-  else
-    echo "FAIL: $desc"
-    FAILED=$(( FAILED + 1 ))
-  fi
-}
-
-sha256_of() {
-  if command -v sha256sum >/dev/null 2>&1; then
-    sha256sum "$1" | cut -d' ' -f1
-  else
-    shasum -a 256 "$1" | cut -d' ' -f1
-  fi
-}
-
-TEST_TMP="$(mktemp -d)"
-trap 'rm -rf "$TEST_TMP"' EXIT
-mkdir -p "$TEST_TMP/bin" "$TEST_TMP/src"
+mkdir -p "$TEST_TMP/src"
 FAKE_LOG="$TEST_TMP/calls.log"
 FAKE_STATE="$TEST_TMP/state"
 FAKE_ASSET_CONTENT="replicator 0.22.0 linux binary"
@@ -214,6 +190,74 @@ printf 'not json\n' > "$TEST_TMP/garbage.json"
 scan_case "govulncheck output is not a JSON stream" 3 FAKE_GV_CAND="$TEST_TMP/garbage.json"
 scan_case "govulncheck output has no config.db_last_modified" 3 FAKE_GV_LATEST=govulncheck_noconfig.json
 
+echo "=== zero findings ==="
+cat << 'EOF' > "$TEST_TMP/gv_zero.json"
+{"config": {"protocol_version": "v1.0.0", "scanner_name": "govulncheck", "db_last_modified": "2026-10-07T14:10:51Z"}}
+{"progress": {"message": "Scanning your code is done. No vulnerabilities found."}}
+EOF
+scan_case "candidate has zero findings stream" 0 FAKE_GV_CAND="$TEST_TMP/gv_zero.json"
+assert "candidate findings list is empty array" "[[ \$(q '.candidate.findings') == '[]' ]]"
+assert "latest findings preserved" "[[ \$(q '.latest.findings | length') == 3 ]]"
+assert "public log reports candidate 0 findings" "grep -q 'candidate 0' '$TEST_TMP/stdout'"
+scan_case "both latest and candidate have zero findings" 0 FAKE_GV_LATEST="$TEST_TMP/gv_zero.json" FAKE_GV_CAND="$TEST_TMP/gv_zero.json"
+assert "both findings lists are empty arrays" "[[ \$(q '[.latest.findings, .candidate.findings]') == '[[],[]]' ]]"
+assert "public log reports 0 findings for both" "grep -q 'has 0 findings, candidate 0' '$TEST_TMP/stdout'"
+
+echo "=== malformed finding records (exit 3) ==="
+cat << 'EOF' > "$TEST_TMP/gv_finding_null.json"
+{"config": {"db_last_modified": "2026-10-07T14:10:51Z"}}
+{"finding": null}
+EOF
+scan_case "finding record is null" 3 FAKE_GV_CAND="$TEST_TMP/gv_finding_null.json"
+assert "error reported for candidate" "grep -q 'cannot read findings for the candidate' '$TEST_TMP/stderr'"
+assert "no scan.json written on failure" "[[ ! -e '$TEST_TMP/scan.json' ]]"
+
+cat << 'EOF' > "$TEST_TMP/gv_finding_string.json"
+{"config": {"db_last_modified": "2026-10-07T14:10:51Z"}}
+{"finding": "GO-2026-0001"}
+EOF
+scan_case "finding record is non-object string" 3 FAKE_GV_CAND="$TEST_TMP/gv_finding_string.json"
+assert "error reported for candidate" "grep -q 'cannot read findings for the candidate' '$TEST_TMP/stderr'"
+
+cat << 'EOF' > "$TEST_TMP/gv_finding_array.json"
+{"config": {"db_last_modified": "2026-10-07T14:10:51Z"}}
+{"finding": ["GO-2026-0001"]}
+EOF
+scan_case "finding record is non-object array" 3 FAKE_GV_CAND="$TEST_TMP/gv_finding_array.json"
+assert "error reported for candidate" "grep -q 'cannot read findings for the candidate' '$TEST_TMP/stderr'"
+
+cat << 'EOF' > "$TEST_TMP/gv_osv_absent.json"
+{"config": {"db_last_modified": "2026-10-07T14:10:51Z"}}
+{"finding": {"trace": []}}
+EOF
+scan_case "finding record has absent osv" 3 FAKE_GV_CAND="$TEST_TMP/gv_osv_absent.json"
+assert "error reported for candidate" "grep -q 'cannot read findings for the candidate' '$TEST_TMP/stderr'"
+
+cat << 'EOF' > "$TEST_TMP/gv_osv_null.json"
+{"config": {"db_last_modified": "2026-10-07T14:10:51Z"}}
+{"finding": {"osv": null, "trace": []}}
+EOF
+scan_case "finding record has null osv (root-parser-repro regression)" 3 FAKE_GV_CAND="$TEST_TMP/gv_osv_null.json"
+assert "error reported for candidate" "grep -q 'cannot read findings for the candidate' '$TEST_TMP/stderr'"
+
+cat << 'EOF' > "$TEST_TMP/gv_osv_number.json"
+{"config": {"db_last_modified": "2026-10-07T14:10:51Z"}}
+{"finding": {"osv": 12345}}
+EOF
+scan_case "finding record has nonstring osv" 3 FAKE_GV_CAND="$TEST_TMP/gv_osv_number.json"
+assert "error reported for candidate" "grep -q 'cannot read findings for the candidate' '$TEST_TMP/stderr'"
+
+cat << 'EOF' > "$TEST_TMP/gv_osv_empty.json"
+{"config": {"db_last_modified": "2026-10-07T14:10:51Z"}}
+{"finding": {"osv": ""}}
+EOF
+scan_case "finding record has empty string osv" 3 FAKE_GV_CAND="$TEST_TMP/gv_osv_empty.json"
+assert "error reported for candidate" "grep -q 'cannot read findings for the candidate' '$TEST_TMP/stderr'"
+
+scan_case "latest scan has malformed finding" 3 FAKE_GV_LATEST="$TEST_TMP/gv_osv_null.json"
+assert "error reported for latest" "grep -q 'cannot read findings for 0.22.0' '$TEST_TMP/stderr'"
+assert "no scan.json written on failure" "[[ ! -e '$TEST_TMP/scan.json' ]]"
+
 echo "=== inputs (exit 2) ==="
 scan_case "SOURCE_DIR unset" 2 SOURCE_DIR=
 scan_case "SOURCE_DIR does not exist" 2 SOURCE_DIR="$TEST_TMP/nope"
@@ -223,9 +267,4 @@ scan_case "latest.tag not semver" 2 FACTS_ARG="$TEST_TMP/facts_tag.json"
 jq '.tool = "winfs-injector"' "$FACTS" > "$TEST_TMP/facts_tool.json"
 scan_case "tool does not match repo" 2 FACTS_ARG="$TEST_TMP/facts_tool.json"
 
-echo ""
-echo "scan_test: $TOTAL tests, $FAILED failed"
-if (( FAILED > 0 )); then
-  exit 1
-fi
-exit 0
+test_finish "scan_test"

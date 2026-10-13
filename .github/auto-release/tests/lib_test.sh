@@ -3,50 +3,17 @@ set -euo pipefail
 
 # lib_test.sh - Unit tests for lib.sh
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/test_support.sh"
 # shellcheck source=.github/auto-release/lib.sh
 source "${SCRIPT_DIR}/../lib.sh"
 
-FAILED=0
-TOTAL=0
-
-assert() {
-  local desc="$1"
-  local cond="$2"
-  TOTAL=$(( TOTAL + 1 ))
-  if eval "$cond"; then
-    echo "PASS: $desc"
-  else
-    echo "FAIL: $desc"
-    FAILED=$(( FAILED + 1 ))
-  fi
-}
-
-# assert_rc <desc> <expected exit code> <command>: run command in a subshell
-assert_rc() {
-  local desc="$1" want="$2" cmd="$3" rc=0
-  TOTAL=$(( TOTAL + 1 ))
-  ( eval "$cmd" ) >/dev/null 2>&1 || rc=$?
-  if [[ "$rc" == "$want" ]]; then
-    echo "PASS: $desc"
-  else
-    echo "FAIL: $desc (exit $rc, want $want)"
-    FAILED=$(( FAILED + 1 ))
-  fi
-}
-
 # Setup fake gh on PATH
-TEST_TMP="$(mktemp -d)"
-trap 'rm -rf "$TEST_TMP"' EXIT
-
-mkdir -p "$TEST_TMP/bin"
 cat << 'EOF' > "$TEST_TMP/bin/gh"
 #!/usr/bin/env bash
 echo "FAKE_GH_CALLED: $*"
 exit 0
 EOF
 chmod +x "$TEST_TMP/bin/gh"
-ORIG_PATH="$PATH"
-export PATH="$TEST_TMP/bin:$ORIG_PATH"
 
 echo "=== Testing is_semver ==="
 assert "is_semver valid: 0.1.0" "is_semver '0.1.0'"
@@ -104,11 +71,11 @@ assert_rc "require_write fails when CLI_RELEASE_WRITE=true" 2 "CLI_RELEASE_WRITE
 
 echo "=== Testing ghx_write allowed endpoints ==="
 # Without CLI_RELEASE_WRITE=1, all must fail
-assert_rc "ghx_write fails without CLI_RELEASE_WRITE" 2 "CLI_RELEASE_WRITE=0 ghx_write workflow run ci.yml"
+assert_rc "ghx_write fails without CLI_RELEASE_WRITE" 2 "CLI_RELEASE_WRITE=0 ghx_write repos/pivotal-cf/replicator/actions/workflows/ci.yml/dispatches -f ref=refs/tags/1.0.0 -F return_run_details=true"
 
 # With CLI_RELEASE_WRITE=1
 export CLI_RELEASE_WRITE=1
-assert "ghx_write allows workflow run" "ghx_write workflow run ci.yml --ref 1.0.0 >/dev/null"
+assert "ghx_write allows ci.yml dispatches POST" "ghx_write repos/pivotal-cf/replicator/actions/workflows/ci.yml/dispatches -f ref=refs/tags/1.0.0 -F return_run_details=true >/dev/null"
 assert "ghx_write allows git/refs POST" "ghx_write repos/pivotal-cf/replicator/git/refs -f ref=refs/tags/1.0.0 >/dev/null"
 assert "ghx_write allows issues POST" "ghx_write repos/pivotal-cf/replicator/issues -f title=test >/dev/null"
 assert "ghx_write allows issues PATCH" "ghx_write repos/pivotal-cf/replicator/issues/123 -X PATCH -f state=closed >/dev/null"
@@ -117,22 +84,28 @@ assert "ghx_write allows labels POST" "ghx_write repos/pivotal-cf/replicator/lab
 assert "ghx_write allows run cancel POST" "ghx_write repos/pivotal-cf/replicator/actions/runs/456/cancel >/dev/null"
 
 echo "=== Testing ghx_write disallowed endpoints refusal ==="
+assert_rc "ghx_write refuses workflow run" 2 "ghx_write workflow run ci.yml --ref 1.0.0"
+assert_rc "ghx_write refuses other workflow dispatches" 2 "ghx_write repos/pivotal-cf/replicator/actions/workflows/other.yml/dispatches -f ref=refs/tags/1.0.0"
+assert_rc "ghx_write refuses GET method on ci.yml dispatches" 2 "ghx_write -X GET repos/pivotal-cf/replicator/actions/workflows/ci.yml/dispatches"
 assert_rc "ghx_write refuses releases endpoint" 2 "ghx_write repos/pivotal-cf/replicator/releases -f tag_name=1.0.0"
 assert_rc "ghx_write refuses pulls endpoint" 2 "ghx_write repos/pivotal-cf/replicator/pulls -f title=foo"
 assert_rc "ghx_write refuses DELETE method on git/refs" 2 "ghx_write repos/pivotal-cf/replicator/git/refs -X DELETE"
 assert_rc "ghx_write refuses unknown endpoint" 2 "ghx_write repos/pivotal-cf/replicator/unknown"
 
-echo "=== Testing summary_append and json_get ==="
+echo "=== Testing summary_append ==="
 SUMMARY_FILE="$TEST_TMP/summary.txt"
 export GITHUB_STEP_SUMMARY="$SUMMARY_FILE"
 summary_append "hello summary"
 assert "summary_append wrote to file" "grep -q 'hello summary' '$SUMMARY_FILE'"
 
-TEST_JSON="$TEST_TMP/data.json"
-echo '{"name":"replicator","count":42}' > "$TEST_JSON"
-assert "json_get extracts string" "[[ \"\$(json_get \"$TEST_JSON\" '.name')\" == 'replicator' ]]"
-assert "json_get extracts number" "[[ \"\$(json_get \"$TEST_JSON\" '.count')\" == '42' ]]"
-assert_rc "json_get missing file exits 2" 2 "json_get '$TEST_TMP/missing.json' '.name'"
+echo "=== Testing mode_rank ==="
+assert "mode_rank off -> 0" "[[ \"\$(mode_rank 'off')\" == '0' ]]"
+assert "mode_rank report -> 1" "[[ \"\$(mode_rank 'report')\" == '1' ]]"
+assert "mode_rank notify -> 2" "[[ \"\$(mode_rank 'notify')\" == '2' ]]"
+assert "mode_rank approve -> 3" "[[ \"\$(mode_rank 'approve')\" == '3' ]]"
+assert "mode_rank auto -> 4" "[[ \"\$(mode_rank 'auto')\" == '4' ]]"
+assert "mode_rank unknown -> -1" "[[ \"\$(mode_rank 'unknown')\" == '-1' ]]"
+assert "mode_rank empty -> -1" "[[ \"\$(mode_rank '')\" == '-1' ]]"
 
 echo "=== Testing get_all_pages ==="
 # Test array shape (no prop)
@@ -179,9 +152,4 @@ assert_rc "get_all_pages fails on malformed page" 2 "get_all_pages 'repos/pivota
 assert_rc "get_all_pages fails on empty body" 2 "get_all_pages 'repos/pivotal-cf/replicator/no_json'"
 assert_rc "get_all_pages fails on api error" 1 "get_all_pages 'repos/pivotal-cf/replicator/failed'"
 
-echo "========================================="
-echo "lib_test: $TOTAL tests, $FAILED failed"
-if (( FAILED > 0 )); then
-  exit 1
-fi
-exit 0
+test_finish "lib_test"

@@ -3,39 +3,9 @@ set -euo pipefail
 
 # janitor_test.sh - Unit tests for janitor.sh
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/test_support.sh"
 JANITOR_SH="${SCRIPT_DIR}/../janitor.sh"
 
-FAILED=0
-TOTAL=0
-
-assert() {
-  local desc="$1"
-  local cond="$2"
-  TOTAL=$(( TOTAL + 1 ))
-  if eval "$cond"; then
-    echo "PASS: $desc"
-  else
-    echo "FAIL: $desc"
-    FAILED=$(( FAILED + 1 ))
-  fi
-}
-
-assert_rc() {
-  local desc="$1" want="$2" cmd="$3" rc=0
-  TOTAL=$(( TOTAL + 1 ))
-  ( eval "$cmd" ) >/dev/null 2>&1 || rc=$?
-  if [[ "$rc" == "$want" ]]; then
-    echo "PASS: $desc"
-  else
-    echo "FAIL: $desc (exit $rc, want $want)"
-    FAILED=$(( FAILED + 1 ))
-  fi
-}
-
-TEST_TMP="$(mktemp -d)"
-trap 'rm -rf "$TEST_TMP"' EXIT
-
-mkdir -p "$TEST_TMP/bin"
 cat << 'EOF' > "$TEST_TMP/bin/gh"
 #!/usr/bin/env bash
 echo "$*" >> "$TEST_TMP/gh_calls.log"
@@ -85,9 +55,6 @@ exit 0
 EOF
 
 chmod +x "$TEST_TMP/bin/gh"
-ORIG_PATH="$PATH"
-export PATH="$TEST_TMP/bin:$ORIG_PATH"
-export TEST_TMP
 
 setup_env() {
   export CLI_RELEASE_WRITE=1
@@ -213,9 +180,4 @@ echo 'malformed-not-json' > "$TEST_TMP/runs_page2.json"
 assert_rc "janitor.sh fails closed on malformed page" 2 "bash '$JANITOR_SH'"
 assert "no runs cancelled on malformed page" "! grep -q '/cancel' '$TEST_TMP/gh_writes.log' 2>/dev/null"
 
-echo "========================================="
-echo "janitor_test: $TOTAL tests, $FAILED failed"
-if (( FAILED > 0 )); then
-  exit 1
-fi
-exit 0
+test_finish "janitor_test"
