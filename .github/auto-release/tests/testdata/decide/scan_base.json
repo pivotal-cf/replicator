@@ -6,9 +6,6 @@
     "findings": ["GO-2026-0001", "GO-2026-0002", "GO-2026-0003"],
     "db_last_modified": "2026-10-07T10:00:00Z"
   },
-  "candidate": {
-    "findings": ["GO-2026-0003"],
-    "db_last_modified": "2026-10-07T10:00:00Z"
-  },
+  "candidate": {"findings": ["GO-2026-0003"], "db_last_modified": "2026-10-07T10:00:00Z"},
   "db_rerun": false
 }
