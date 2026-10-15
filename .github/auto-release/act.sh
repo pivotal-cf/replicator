@@ -107,6 +107,8 @@ fi
 # STUCK_RELEASE_ALERT_HOURS and opens/updates a tracking issue. Manual stuck recovery
 # requires an operator to investigate failure logs and manually dispatch ci.yml:
 #   gh workflow run ci.yml -R "$REPO" --ref "$VERSION"
+# matching-refs returns all matching refs, unlike the paginated /tags endpoint.
+# https://docs.github.com/en/rest/git/refs#list-matching-references
 tags_json="$(ghx "repos/$REPO/git/matching-refs/tags")" || die "act.sh: failed to list tags"
 tag_refs="$(echo "$tags_json" | jq -r '.[].ref // empty')"
 
@@ -247,14 +249,16 @@ dispatch_resp="$(ghx_write "repos/$REPO/actions/workflows/ci.yml/dispatches" \
   -f ref="$VERSION" \
   -F return_run_details=true)" || die "act.sh: POST ci.yml/dispatches failed"
 
-dispatched_run_id="$(jq -er --arg repo "$REPO" '
+# The run ID identifies the dispatch. Response URLs are advisory; never follow them.
+# Fetch from the configured repository and construct the summary URL locally.
+# Do not retry this POST on response-validation failure: it may already have
+# started the release. Inspect the tag's CI runs before manual recovery.
+dispatched_run_id="$(jq -er '
   select(
     type == "object" and
-    (.workflow_run_id | type == "number" and floor == . and . > 0) and
-    .run_url == "https://api.github.com/repos/\($repo)/actions/runs/\(.workflow_run_id)" and
-    .html_url == "https://github.com/\($repo)/actions/runs/\(.workflow_run_id)"
+    (.workflow_run_id | type == "number" and floor == . and . > 0)
   ) | .workflow_run_id
-' <<<"$dispatch_resp" 2>/dev/null)" || die "act.sh: dispatch response failed schema or URL validation"
+' <<<"$dispatch_resp" 2>/dev/null)" || die "act.sh: tag ${VERSION} was created but dispatch response has no valid run ID; inspect CI runs before manually dispatching ci.yml on this tag"
 
 # 7. Retain commit/tag identity checks by fetching the dispatched run
 run_json="$(ghx "repos/$REPO/actions/runs/$dispatched_run_id")" || die "act.sh: failed to fetch dispatched run ${dispatched_run_id}"

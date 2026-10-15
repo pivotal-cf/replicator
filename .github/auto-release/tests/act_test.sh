@@ -529,22 +529,34 @@ setup_env
 echo '{"workflow_run_id":987654.321,"run_url":"https://api.github.com/repos/pivotal-cf/replicator/actions/runs/987654","html_url":"https://github.com/pivotal-cf/replicator/actions/runs/987654"}' > "$TEST_TMP/dispatch_resp.json"
 assert_rc "act.sh fails if workflow_run_id is float" 2 "bash '$ACT_SH'"
 
-# URL validation for expected repo
+# Response URLs are advisory: fetch the run from the known repo using its ID.
 setup_env
 echo '{"workflow_run_id":987654321,"run_url":"https://api.github.com/repos/other-org/other-repo/actions/runs/987654321","html_url":"https://github.com/pivotal-cf/replicator/actions/runs/987654321"}' > "$TEST_TMP/dispatch_resp.json"
-assert_rc "act.sh fails if run_url repo does not match" 2 "bash '$ACT_SH'"
+assert_rc "act.sh verifies run identity when run_url repo differs" 0 "bash '$ACT_SH'"
 
 setup_env
 echo '{"workflow_run_id":987654321,"run_url":"https://api.github.com/repos/pivotal-cf/replicator/actions/runs/987654321","html_url":"https://github.com/other-org/other-repo/actions/runs/987654321"}' > "$TEST_TMP/dispatch_resp.json"
-assert_rc "act.sh fails if html_url repo does not match" 2 "bash '$ACT_SH'"
+assert_rc "act.sh verifies run identity when html_url repo differs" 0 "bash '$ACT_SH'"
 
 setup_env
 echo '{"workflow_run_id":987654321,"run_url":"https://api.github.com/repos/pivotal-cf/replicator/actions/runs/111111","html_url":"https://github.com/pivotal-cf/replicator/actions/runs/987654321"}' > "$TEST_TMP/dispatch_resp.json"
-assert_rc "act.sh fails if run_url run ID does not match workflow_run_id" 2 "bash '$ACT_SH'"
+assert_rc "act.sh verifies run identity when run_url run ID differs" 0 "bash '$ACT_SH'"
 
 setup_env
 echo '{"workflow_run_id":987654321,"run_url":"https://api.github.com/repos/pivotal-cf/replicator/actions/runs/987654321","html_url":""}' > "$TEST_TMP/dispatch_resp.json"
-assert_rc "act.sh fails if html_url is empty" 2 "bash '$ACT_SH'"
+assert_rc "act.sh verifies run identity when html_url is empty" 0 "bash '$ACT_SH'"
+
+setup_env
+echo '{"workflow_run_id":987654321}' > "$TEST_TMP/dispatch_resp.json"
+assert_rc "act.sh accepts ID-only response after verifying run identity" 0 "bash '$ACT_SH'"
+assert "run is fetched from the configured repo" "grep -q 'repos/pivotal-cf/replicator/actions/runs/987654321' '$TEST_TMP/gh_calls.log'"
+assert "summary uses locally constructed run URL" "grep -q 'https://github.com/pivotal-cf/replicator/actions/runs/987654321' '$TEST_TMP/summary.md'"
+assert "response metadata does not trigger another dispatch" "[[ $(grep -c 'API_WRITE: .*ci.yml/dispatches' "$TEST_TMP/gh_writes.log") == 1 ]]"
+
+setup_env
+echo '{}' > "$TEST_TMP/dispatch_resp.json"
+assert_rc "unusable dispatch response fails without retrying a potentially accepted POST" 2 "bash '$ACT_SH'"
+assert "unusable response does not trigger another dispatch" "[[ $(grep -c 'API_WRITE: .*ci.yml/dispatches' "$TEST_TMP/gh_writes.log") == 1 ]]"
 
 echo "=== Testing Dispatched Run Identity Verification ==="
 # Run fetch failure
@@ -634,5 +646,13 @@ cat << 'EOF' > "$TEST_TMP/run.json"
 }
 EOF
 assert_rc "act.sh accepts run with refs/tags/ prefix in head_branch" 0 "bash '$ACT_SH'"
+
+echo "=== Testing Tags Beyond Position 30 ==="
+for tag in 0.23.0 0.24.0; do
+  setup_env
+  jq -n --arg tag "$tag" '[range(1; 32) | {ref: ("refs/tags/0.0." + tostring)}] + [{ref: ("refs/tags/" + $tag)}]' > "$TEST_TMP/tags.json"
+  assert_rc "tag $tag at position 32 prevents release" 0 "bash '$ACT_SH'"
+  assert "tag $tag beyond position 30 prevents writes" "[[ ! -s '$TEST_TMP/gh_writes.log' ]]"
+done
 
 test_finish "act_test"
