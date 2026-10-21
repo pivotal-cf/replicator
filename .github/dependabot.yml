@@ -2,12 +2,24 @@ version: 2
 updates:
 - package-ecosystem: "github-actions"
   directory: "/"
-  target-branch: "master"
   schedule:
     interval: "weekly"
+  groups:
+    security-fixes:
+      applies-to: security-updates
+      patterns: ["*"]
+    routine-updates:
+      applies-to: version-updates
+      patterns: ["*"]
 
 - package-ecosystem: "gomod"
   directory: "/"
-  target-branch: "master"
   schedule:
     interval: "weekly"
+  groups:
+    security-fixes:
+      applies-to: security-updates
+      patterns: ["*"]
+    routine-updates:
+      applies-to: version-updates
+      patterns: ["*"]
