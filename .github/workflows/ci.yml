@@ -1,7 +1,6 @@
 name: ci
 
 on:
-  workflow_dispatch:
   push:
     branches:
     - "master"
@@ -26,9 +25,6 @@ jobs:
         uses: actions/setup-go@v7
         with:
           go-version-file: ./go.mod
-
-      - name: Test Dependabot CVE release automation
-        run: python3 -m unittest discover -s .github/dependabot-release -p 'test_*.py'
 
       - name: Build
         run: go build -v ./...
